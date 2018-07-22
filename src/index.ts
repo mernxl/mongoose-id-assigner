@@ -1,0 +1,7 @@
+import { MongooseIdAssigner } from './MongooseIdAssigner';
+
+export default MongooseIdAssigner;
+
+export * from './assigner.interfaces';
+export * from './LocalStateStore';
+export { MongooseIdAssigner };

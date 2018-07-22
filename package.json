@@ -1,0 +1,52 @@
+{
+  "name": "mongoose-id-assigner",
+  "version": "0.1.0",
+  "description": "Plugin for `mongoose`, Automatically assign and increment any uniquely identified field on your mongoose models.",
+  "main": "lib/index.js",
+  "repository": "https://github.com/mernxl/mongoose-assign-id.git",
+  "author": "mernxl <mernxl@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "tsc": "tsc",
+    "lint": "tslint -p ./",
+    "jest:watch": "jest --watch",
+    "coverage": "jest --coverage --maxWorkers 2",
+    "test": "npm run coverage && npm run lint"
+  },
+  "dependencies": {
+    "event-to-promise": "^0.8.0",
+    "mongoose": "^5.2.4",
+    "uuid": "^3.3.2"
+  },
+  "jest": {
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)spec)\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
+  },
+  "devDependencies": {
+    "@types/event-to-promise": "^0.7.0",
+    "@types/jest": "^23.3.0",
+    "@types/mongoose": "^5.2.1",
+    "@types/uuid": "^3.4.3",
+    "babel-core": "^6.26.3",
+    "jest": "^23.4.1",
+    "nodemon": "^1.18.3",
+    "prettier": "^1.13.7",
+    "rimraf": "^2.6.2",
+    "ts-jest": "^23.0.1",
+    "tslint": "^5.11.0",
+    "typescript": "^2.9.2"
+  }
+}
