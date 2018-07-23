@@ -1,4 +1,6 @@
 # Mongoose-Id-Assigner (IA)
+[![Build Status](https://travis-ci.org/mernxl/mongoose-id-assigner.svg?branch=master)](https://travis-ci.org/mernxl/mongoose-id-assigner)
+
 Plugin for `mongoose`, Automatically assign and/or increment any field on your mongoose models that needs to be identified(ID).
 
 It offers support for assigning with `MongoDB's ObjectId`, `UUID`, `Number Increments`, `String Generators` or you provide your custom `Generator Function`.
