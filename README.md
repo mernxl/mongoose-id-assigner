@@ -71,3 +71,7 @@ describe('MongooseIdAssigner', () => {
   })
 })
 ```
+
+## LICENSE
+[MIT](https://github.com/mernxl/mongoose-id-assigner/blob/master/LICENSE.md)
+
