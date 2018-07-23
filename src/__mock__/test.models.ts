@@ -1,5 +1,17 @@
 import { createConnection, Schema } from 'mongoose';
 
+const ExampleSchema = new Schema({
+  _id: String,
+
+  photoId: Number,
+  emailId: String,
+  personId: String,
+  uuidField: Buffer,
+  uuidFieldString: String,
+  uuidFieldBuffer: Buffer,
+  objectIdField: Schema.Types.ObjectId,
+});
+
 const CharacterSchema = new Schema(
   {
     _id: String,
@@ -11,15 +23,6 @@ const CharacterSchema = new Schema(
   },
 );
 
-const PersonSchema = new Schema({
-  _id: String,
-
-  photoId: Number,
-  emailId: String,
-  personId: String,
-  uuidField: Buffer,
-});
-
 const DroidSchema = new Schema({
   model: String,
 });
@@ -29,7 +32,7 @@ export const demoDB = createConnection('mongodb://localhost:27017/demoDB', {
 });
 
 export function getSchema(index: number) {
-  const schema = [CharacterSchema, PersonSchema, DroidSchema];
+  const schema = [ExampleSchema, CharacterSchema, DroidSchema];
 
   return schema[index].clone();
 }

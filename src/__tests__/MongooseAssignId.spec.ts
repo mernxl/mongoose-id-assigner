@@ -1,6 +1,6 @@
-import { Schema } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 import { demoDB, getSchema } from '../__mock__/test.models';
-import { AssignIdPluginOptions, FieldTypes } from '../assigner.interfaces';
+import { AssignerOptions, FieldConfigTypes } from '../assigner.interfaces';
 import { localStateStore } from '../LocalStateStore';
 import { MongooseIdAssigner } from '../MongooseIdAssigner';
 
@@ -11,65 +11,67 @@ afterAll(async () => {
 afterEach(() => demoDB.dropDatabase());
 
 describe('MongooseIdAssigner', () => {
-  let personSchema: Schema, droidSchema: Schema, characterSchema: Schema;
+  let exampleSchema: Schema;
 
   beforeEach(() => {
-    characterSchema = getSchema(0);
-    personSchema = getSchema(1);
-    droidSchema = getSchema(2);
+    exampleSchema = getSchema(1);
     localStateStore.clear();
   });
 
   it('should assign _id field if only modelName option passed', async () => {
-    personSchema.plugin(MongooseIdAssigner.plugin, { modelName: 'person1' });
+    exampleSchema.plugin(MongooseIdAssigner.plugin, { modelName: 'example1' });
 
-    const personModel = demoDB.model('person1', personSchema);
+    const exampleModel = demoDB.model('example1', exampleSchema);
 
-    const doc = await personModel.create({ personId: 'mernxl' });
+    const doc = await exampleModel.create({ personId: 'mernxl' });
 
     expect(doc._id).toBeTruthy();
   });
 
   it('should apply plugin by calling new MongooseIdAssigner', async () => {
-    const plugin = new MongooseIdAssigner(personSchema, {
-      modelName: 'person2',
+    const plugin = new MongooseIdAssigner(exampleSchema, {
+      modelName: 'example2',
     });
 
     expect(plugin).toBeInstanceOf(MongooseIdAssigner);
 
-    const personModel = demoDB.model('person2', personSchema);
+    const exampleModel = demoDB.model('example2', exampleSchema);
 
-    const doc = await personModel.create({ personId: 'mernxl' });
+    const doc = await exampleModel.create({ personId: 'mernxl' });
 
     expect(doc._id).toBeTruthy();
   });
 
   it('should apply plugin with method MongooseIdAssigner.plugin', async () => {
-    const plugin = MongooseIdAssigner.plugin(personSchema, {
-      modelName: 'person3',
+    const plugin = MongooseIdAssigner.plugin(exampleSchema, {
+      modelName: 'example3',
     });
 
     expect(plugin).toBeInstanceOf(MongooseIdAssigner);
 
-    const personModel = demoDB.model('person3', personSchema);
+    const exampleModel = demoDB.model('example3', exampleSchema);
 
-    const doc = await personModel.create({ personId: 'mernxl' });
+    const doc = await exampleModel.create({ personId: 'mernxl' });
 
     expect(doc._id).toBeTruthy();
   });
 
   it('should assign _ids to Model instances with options', async () => {
-    MongooseIdAssigner.plugin(personSchema, {
-      modelName: 'person4',
+    MongooseIdAssigner.plugin(exampleSchema, {
+      modelName: 'example4',
       fields: {
-        _id: { type: FieldTypes.String, separator: 'T', nextId: '34T5565' },
+        _id: {
+          type: FieldConfigTypes.String,
+          separator: 'T',
+          nextId: '34T5565',
+        },
       },
     });
 
-    const personModel = demoDB.model('person4', personSchema);
+    const exampleModel = demoDB.model('example4', exampleSchema);
 
     try {
-      const doc = await personModel.create({ personId: 'mernxl' });
+      const doc = await exampleModel.create({ personId: 'mernxl' });
 
       expect(doc._id).toBe('34T5565');
     } catch (e) {
@@ -78,8 +80,8 @@ describe('MongooseIdAssigner', () => {
   });
 
   it('should assign multiple ids to fields', async () => {
-    const options: AssignIdPluginOptions = {
-      modelName: 'person5',
+    const options: AssignerOptions = {
+      modelName: 'example5',
       fields: {
         _id: '33333',
         photoId: 44444,
@@ -89,11 +91,11 @@ describe('MongooseIdAssigner', () => {
       },
     };
 
-    personSchema.plugin(MongooseIdAssigner.plugin, options);
-    const personModel = demoDB.model('person5', personSchema);
+    exampleSchema.plugin(MongooseIdAssigner.plugin, options);
+    const exampleModel = demoDB.model('example5', exampleSchema);
 
-    const doc = await personModel.create({ personId: 'mernxl' });
-    const doc2 = await personModel.create({ personId: 'mernxl' });
+    const doc = await exampleModel.create({ personId: 'mernxl' });
+    const doc2 = await exampleModel.create({ personId: 'mernxl' });
 
     expect([doc._id, doc2._id]).toEqual(
       expect.arrayContaining(['33333', '33334']),
@@ -116,28 +118,39 @@ describe('MongooseIdAssigner', () => {
   });
 
   it('should be robust enough to avoid duplicates', async () => {
-    const options: AssignIdPluginOptions = {
-      modelName: 'person6',
+    const options: AssignerOptions = {
+      modelName: 'example6',
       fields: {
         _id: '33333',
         photoId: 44444,
         emailId: '55555',
-        personId: '66666',
-        uuidField: 'UUID',
+        personId: {
+          type: FieldConfigTypes.String,
+          nextId: 'SPEC-7382-4344-3232',
+          separator: '-',
+        },
+        uuidFieldString: FieldConfigTypes.UUID,
+        uuidFieldBuffer: {
+          type: FieldConfigTypes.UUID,
+          version: 1,
+        },
+        objectIdField: FieldConfigTypes.ObjectId,
       },
     };
 
     try {
-      const plugin = MongooseIdAssigner.plugin(personSchema, options);
+      const plugin = MongooseIdAssigner.plugin(exampleSchema, options);
 
-      const personModel = demoDB.model('person6', personSchema);
+      const exampleModel = demoDB.model('example6', exampleSchema);
 
-      // initialise to ensure that model is set below before performing heavy tasks
-      await plugin.initialise(personModel);
+      // initialise to ensure that
+      // model is set and db is connected
+      // before performing heavy tasks
+      await plugin.initialise(exampleModel);
 
       const promises = [];
       for (let i = 0; i < 100; i++) {
-        promises.push(personModel.create({ personId: 'mernxl' }));
+        promises.push(exampleModel.create({ personId: 'mernxl' }));
       }
 
       const docs: any[] = await Promise.all(promises);
@@ -146,7 +159,15 @@ describe('MongooseIdAssigner', () => {
         const photoId = docs[i].photoId;
         const emailId = docs[i].emailId;
         const personId = docs[i].personId;
-        const uuidField = docs[i].uuidField;
+        const uuidFieldString = docs[i].uuidFieldString;
+        const uuidFieldBuffer = docs[i].uuidFieldBuffer;
+        const objectIdField = docs[i].objectIdField;
+        expect(typeof photoId).toBe('number');
+        expect(typeof emailId).toBe('string');
+        expect(personId).toMatch(/(SPEC-7382-4344-3)\d+/);
+        expect(objectIdField).toBeInstanceOf(Types.ObjectId);
+        expect(typeof uuidFieldString).toBe('string');
+        expect(uuidFieldBuffer).toBeInstanceOf(Buffer);
 
         for (const cDoc of docs) {
           if (_id === cDoc._id) {
@@ -155,7 +176,9 @@ describe('MongooseIdAssigner', () => {
           expect(photoId).not.toBe(cDoc.photoId);
           expect(emailId).not.toBe(cDoc.emailId);
           expect(personId).not.toBe(cDoc.personId);
-          expect(uuidField).not.toEqual(cDoc.uuidField);
+          expect(objectIdField).not.toBe(cDoc.objectIdField);
+          expect(uuidFieldString).not.toEqual(cDoc.uuidFieldString);
+          expect(uuidFieldBuffer).not.toEqual(cDoc.uuidFieldBuffer);
         }
       }
     } catch (e) {
