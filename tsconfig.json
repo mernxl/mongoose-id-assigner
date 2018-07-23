@@ -2,13 +2,11 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "outDir": "./dev",
+    "outDir": "./lib",
     "strict": true,
-    "sourceMap": true,
-    "lib": [
-      "es2015",
-      "esnext.asynciterable"
-    ],
+    "sourceMap": false,
+    "inlineSourceMap": true,
+    "skipLibCheck": true,
     "typeRoots": [
       "node_modules/@types"
     ]
@@ -18,7 +16,7 @@
   ],
   "exclude": [
     "**/*.spec.ts",
-    "src/**/__test__",
+    "src/**/__mock__",
     "src/**/__tests__",
     "node_modules"
   ]

@@ -1,6 +1,5 @@
 # compiled output
-/dev
-/prod
+/lib
 
 # dependencies
 /node_modules
@@ -23,15 +22,8 @@
 
 # OS generated files #
 .DS_Store
-ehthumbs.db
-Icon?
-Thumbs.db
 
-# Users Environment Variables
-.lock-wscript
-
-# Compiled binary addons (http://nodejs.org/api/addons.html)
-build/Release
+coverage
 
 # All Logs
 logs
