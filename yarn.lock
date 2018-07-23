@@ -1834,7 +1834,7 @@ jest-cli@^23.4.1:
 
 jest-config@^23.0.0, jest-config@^23.4.1:
   version "23.4.1"
-  resolved "https://registry.yarnpkg.com/jest-config/-/jest-changes-23.4.1.tgz#3172fa21f0507d7f8a088ed1dbe4157057f201e9"
+  resolved "https://registry.yarnpkg.com/jest-config/-/jest-config-23.4.1.tgz#3172fa21f0507d7f8a088ed1dbe4157057f201e9"
   dependencies:
     babel-core "^6.0.0"
     babel-jest "^23.4.0"
