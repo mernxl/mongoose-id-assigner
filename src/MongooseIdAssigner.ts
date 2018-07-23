@@ -4,7 +4,12 @@ import { Collection } from 'mongodb';
 import { Document, Model, Schema } from 'mongoose';
 import { AssignIdPluginOptions, IdOptions } from './assigner.interfaces';
 import { localStateStore, SchemaState } from './LocalStateStore';
-import { initialiseOptions, normaliseOptions, throwPluginError, waitPromise } from './utils';
+import {
+  initialiseOptions,
+  normaliseOptions,
+  throwPluginError,
+  waitPromise,
+} from './utils';
 import { refreshOptions } from './utils/assign-fields-ids';
 import { configureSchema } from './utils/configure-schema';
 
@@ -68,7 +73,9 @@ export class MongooseIdAssigner extends EventEmitter {
         throwPluginError('Cannot read Model, Not Initialised');
       }
     }
-    return (model as Model<Document>).db.collection(localStateStore.getCollName());
+    return (model as Model<Document>).db.collection(
+      localStateStore.getCollName(),
+    );
   }
 
   static plugin(schema: Schema, options: AssignIdPluginOptions) {

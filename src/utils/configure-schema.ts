@@ -12,13 +12,13 @@ function configureIndexes(assignId: MongooseIdAssigner) {
     return;
   }
 
-  for (const [ field, options ] of fields.entries()) {
+  for (const [field, options] of fields.entries()) {
     if (field === '_id') {
       continue;
     }
 
     if (options.index) {
-      schema.index({ [ field ]: -1 }, { unique: options.unique });
+      schema.index({ [field]: -1 }, { unique: options.unique });
     }
   }
 }
@@ -27,7 +27,7 @@ function configurePreSave(assigner: MongooseIdAssigner) {
   const options = assigner.options;
   const schema = assigner.schema;
 
-  schema.pre('save', async function (this: Document, next) {
+  schema.pre('save', async function(this: Document, next) {
     const doc = this as any;
 
     try {
@@ -44,7 +44,7 @@ function configurePreSave(assigner: MongooseIdAssigner) {
             throwPluginError(
               `Cannot assign field ids, Error on Init. [${
                 assigner.state.error
-                }]`,
+              }]`,
               options.modelName,
             ),
           );

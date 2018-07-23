@@ -95,20 +95,20 @@ describe('MongooseIdAssigner', () => {
     const doc = await personModel.create({ personId: 'mernxl' });
     const doc2 = await personModel.create({ personId: 'mernxl' });
 
-    expect([ doc._id, doc2._id ]).toEqual(
-      expect.arrayContaining([ '33333', '33334' ]),
+    expect([doc._id, doc2._id]).toEqual(
+      expect.arrayContaining(['33333', '33334']),
     );
     expect((doc as any).photoId).not.toBe((doc2 as any).photoId);
-    expect([ (doc as any).photoId, (doc2 as any).photoId ]).toEqual(
-      expect.arrayContaining([ 44444, 44445 ]),
+    expect([(doc as any).photoId, (doc2 as any).photoId]).toEqual(
+      expect.arrayContaining([44444, 44445]),
     );
     expect((doc as any).emailId).not.toBe((doc2 as any).emailId);
-    expect([ (doc as any).emailId, (doc2 as any).emailId ]).toEqual(
-      expect.arrayContaining([ '55555', '55556' ]),
+    expect([(doc as any).emailId, (doc2 as any).emailId]).toEqual(
+      expect.arrayContaining(['55555', '55556']),
     );
     expect((doc as any).personId).not.toBe((doc2 as any).personId);
-    expect([ (doc as any).personId, (doc2 as any).personId ]).toEqual(
-      expect.arrayContaining([ '66666', '66667' ]),
+    expect([(doc as any).personId, (doc2 as any).personId]).toEqual(
+      expect.arrayContaining(['66666', '66667']),
     );
     expect((doc as any).uuidField).not.toBe((doc2 as any).uuidField);
     expect((doc as any).uuidField).toBeInstanceOf(Buffer);
@@ -142,11 +142,11 @@ describe('MongooseIdAssigner', () => {
 
       const docs: any[] = await Promise.all(promises);
       for (let i = 0; i < 100; i++) {
-        const _id = docs[ i ]._id;
-        const photoId = docs[ i ].photoId;
-        const emailId = docs[ i ].emailId;
-        const personId = docs[ i ].personId;
-        const uuidField = docs[ i ].uuidField;
+        const _id = docs[i]._id;
+        const photoId = docs[i].photoId;
+        const emailId = docs[i].emailId;
+        const personId = docs[i].personId;
+        const uuidField = docs[i].uuidField;
 
         for (const cDoc of docs) {
           if (_id === cDoc._id) {

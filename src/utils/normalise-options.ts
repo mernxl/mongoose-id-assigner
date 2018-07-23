@@ -1,4 +1,9 @@
-import { AssignIdPluginOptions, FieldTypes, IdOptions, StringOptions } from '../assigner.interfaces';
+import {
+  AssignIdPluginOptions,
+  FieldTypes,
+  IdOptions,
+  StringOptions,
+} from '../assigner.interfaces';
 import { NormalisedOptions } from '../MongooseIdAssigner';
 import { throwPluginError } from './others';
 import { isNumber, isObjectId, isString, isUUID } from './type-guards';
@@ -100,8 +105,8 @@ export function normaliseOptions(
 
   const fields: Map<string, IdOptions> = new Map();
 
-  if (!options.fields[ '_id' ]) {
-    options.fields[ '_id' ] = { type: 'ObjectId' };
+  if (!options.fields['_id']) {
+    options.fields['_id'] = { type: 'ObjectId' };
   }
 
   for (const field in options.fields) {
@@ -109,7 +114,7 @@ export function normaliseOptions(
       continue;
     }
 
-    let fieldOptions = options.fields[ field ];
+    let fieldOptions = options.fields[field];
 
     if (typeof fieldOptions === 'boolean') {
       fieldOptions = { type: FieldTypes.ObjectId };
@@ -135,7 +140,7 @@ export function normaliseOptions(
     if (
       // if not converted to Object already
       (fieldOptions && typeof fieldOptions !== 'object') ||
-      !FieldTypes[ fieldOptions.type ]
+      !FieldTypes[fieldOptions.type]
     ) {
       throwPluginError(
         `Unknown Field Type for field [${field}]`,

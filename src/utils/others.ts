@@ -10,6 +10,6 @@ export function throwPluginError(
   throw new Error(
     `[MongooseIdAssigner], ${modelName ? 'Model: ' + modelName + ', ' : ''}${
       field ? 'Field: ' + field + ', ' : ''
-      }${message}`,
+    }${message}`,
   );
 }

@@ -29,9 +29,9 @@ export async function getNextIdString(
     const update = await idAssigner.collection.findOneAndUpdate(
       {
         modelName: idAssigner.modelName,
-        [ updateField ]: nextId,
+        [updateField]: nextId,
       },
-      { $set: { [ updateField ]: incId } },
+      { $set: { [updateField]: incId } },
       { projection: { value: 1 } },
     );
 

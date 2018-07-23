@@ -1,8 +1,8 @@
 export enum FieldTypes {
-  UUID     = 'UUID',
-  GUID     = 'GUID',
-  String   = 'String',
-  Number   = 'Number',
+  UUID = 'UUID',
+  GUID = 'GUID',
+  String = 'String',
+  Number = 'Number',
   ObjectId = 'ObjectId',
 }
 
@@ -45,7 +45,7 @@ export type IdOptions = {
  * fieldOption = GUID | UUID, then use UUID v4
  */
 export interface AssignIdFieldConfig {
-  [ fieldName: string ]: IdOptions | string | number | boolean | 'GUID' | 'UUID';
+  [fieldName: string]: IdOptions | string | number | boolean | 'GUID' | 'UUID';
 }
 
 /**

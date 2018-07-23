@@ -29,7 +29,7 @@ export const demoDB = createConnection('mongodb://localhost:27017/demoDB', {
 });
 
 export function getSchema(index: number) {
-  const schema = [ CharacterSchema, PersonSchema, DroidSchema ];
+  const schema = [CharacterSchema, PersonSchema, DroidSchema];
 
-  return schema[ index ].clone();
+  return schema[index].clone();
 }

@@ -1,4 +1,11 @@
-import { DefaultOptions, FieldTypes, IdOptions, NumberOptions, StringOptions, UUIDOptions } from '../assigner.interfaces';
+import {
+  DefaultOptions,
+  FieldTypes,
+  IdOptions,
+  NumberOptions,
+  StringOptions,
+  UUIDOptions,
+} from '../assigner.interfaces';
 
 /*export function isDiscriminator(
  options: IAssignIdPluginOptions | IAssignIdPluginDOptions,

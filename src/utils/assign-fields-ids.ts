@@ -1,7 +1,11 @@
 import { ObjectId } from 'mongodb';
 import { Document } from 'mongoose';
 import { MongooseIdAssigner, NormalisedOptions } from '../MongooseIdAssigner';
-import { getNextIdNumber, getNextIdString, getNextIdUUID } from './get-next-ids';
+import {
+  getNextIdNumber,
+  getNextIdString,
+  getNextIdUUID,
+} from './get-next-ids';
 import { checkAndUpdateOptions } from './initialise-options';
 import { throwPluginError } from './others';
 import { isNumber, isObjectId, isString, isUUID } from './type-guards';
@@ -44,26 +48,26 @@ export async function assignIdNetwork(
 
   try {
     const fields = idAssigner.options.fields;
-    for (const [ field, options ] of fields) {
+    for (const [field, options] of fields) {
       if (isObjectId(options)) {
-        (doc as any)[ field ] = new ObjectId();
+        (doc as any)[field] = new ObjectId();
         continue;
       }
 
       if (isUUID(options)) {
-        (doc as any)[ field ] = getNextIdUUID(options);
+        (doc as any)[field] = getNextIdUUID(options);
         continue;
       }
 
       await idAssigner.refreshOptions();
 
       if (isNumber(options)) {
-        (doc as any)[ field ] = await getNextIdNumber(field, idAssigner, options);
+        (doc as any)[field] = await getNextIdNumber(field, idAssigner, options);
         continue;
       }
 
       if (isString(options)) {
-        (doc as any)[ field ] = await getNextIdString(field, idAssigner, options);
+        (doc as any)[field] = await getNextIdString(field, idAssigner, options);
       }
     }
   } catch (e) {
@@ -81,14 +85,14 @@ export function assignIdNoNetwork(
     return;
   }
 
-  for (const [ field, options ] of fields.entries()) {
+  for (const [field, options] of fields.entries()) {
     if (isObjectId(options)) {
-      (doc as any)[ field ] = new ObjectId();
+      (doc as any)[field] = new ObjectId();
       continue;
     }
 
     if (isUUID(options)) {
-      (doc as any)[ field ] = getNextIdUUID(options);
+      (doc as any)[field] = getNextIdUUID(options);
     }
   }
 }

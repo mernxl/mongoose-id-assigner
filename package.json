@@ -12,8 +12,9 @@
     "lint": "tslint -p ./",
     "jest:watch": "jest --watch",
     "coverage": "jest --coverage --maxWorkers 2",
-    "test": "yarn run coverage && yarn run lint && yarn run tsc",
-    "clean": "rimraf lib"
+    "test": "yarn run prettier && yarn run coverage && yarn run lint && yarn run tsc",
+    "clean": "rimraf lib",
+    "prettier": "prettier --write --config .prettierrc \"src/**/*.ts\""
   },
   "dependencies": {
     "event-to-promise": "^0.8.0",

@@ -22,8 +22,8 @@ export function checkAndUpdateOptions(
   }
 
   const rObject = { config: false, options };
-  for (const [ field, option ] of options.fields.entries()) {
-    const oldOption = (dbOptions as any).fields[ field ];
+  for (const [field, option] of options.fields.entries()) {
+    const oldOption = (dbOptions as any).fields[field];
     if (isNumber(option) && oldOption && isNumber(oldOption)) {
       if (oldOption && option.nextId !== oldOption.nextId) {
         rObject.config = true;

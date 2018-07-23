@@ -12,15 +12,15 @@ export function stringIncrementer(max_id: string, separator = '-'): string {
   let lastSig = maxLength + 1; // Position of last significant figure
 
   for (let i = maxLength - 1; i >= 0; i--) {
-    if (max_id[ i ] === separator) {
+    if (max_id[i] === separator) {
       firstDash = i;
       if (maxLength - 1 === i) {
         lastSig = maxLength + 1; // case 99909-
       }
       break;
-    } else if (/[1-9]/.test(max_id[ i ])) {
+    } else if (/[1-9]/.test(max_id[i])) {
       lastSig = i;
-    } else if (max_id[ i ] === '0' && maxLength - 1 === i) {
+    } else if (max_id[i] === '0' && maxLength - 1 === i) {
       lastSig = maxLength; // case 99909-0
     }
   }

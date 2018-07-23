@@ -1,8 +1,12 @@
-import { AssignIdPluginOptions, FieldTypes, IdOptions } from '../../assigner.interfaces';
+import {
+  AssignIdPluginOptions,
+  FieldTypes,
+  IdOptions,
+} from '../../assigner.interfaces';
 import { NormalisedOptions } from '../../MongooseIdAssigner';
 import { normaliseOptions } from '../normalise-options';
 
-const incFn = function (nextId: number) {
+const incFn = function(nextId: number) {
   return nextId + 1;
 };
 
@@ -26,12 +30,12 @@ const expected: NormalisedOptions = {
   modelName: 'Person',
   network: true,
   fields: new Map<string, IdOptions>([
-    [ '_id', { type: FieldTypes.ObjectId } ],
-    [ 'clientId', { type: FieldTypes.ObjectId } ],
-    [ 'withUUID', { type: FieldTypes.UUID, version: 4 } ],
-    [ 'String', { type: FieldTypes.String, nextId: '5555' } ],
-    [ 'Number', { type: FieldTypes.Number, nextId: 5555 } ],
-    [ 'last', { type: FieldTypes.Number, nextId: 5641, incFn } ],
+    ['_id', { type: FieldTypes.ObjectId }],
+    ['clientId', { type: FieldTypes.ObjectId }],
+    ['withUUID', { type: FieldTypes.UUID, version: 4 }],
+    ['String', { type: FieldTypes.String, nextId: '5555' }],
+    ['Number', { type: FieldTypes.Number, nextId: 5555 }],
+    ['last', { type: FieldTypes.Number, nextId: 5641, incFn }],
   ]),
 };
 
