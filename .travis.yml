@@ -1,0 +1,12 @@
+sudo: false
+language: node_js
+cache:
+  yarn: true
+  directories:
+    - node_modules
+    - $HOME/.mongodb-binaries
+notifications:
+  email: true
+script:
+  - yarn run test
+  - yarn run build

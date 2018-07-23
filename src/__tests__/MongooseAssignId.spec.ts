@@ -1,28 +1,32 @@
 import { Binary } from 'bson';
-import { Schema, Types } from 'mongoose';
-import { demoDB, getSchema } from '../__mock__/test.models';
+import { Model, Schema, Types } from 'mongoose';
+import { getMongoose } from '../__mocks__/mongoose.config';
+import { getSchema } from '../__mocks__/test.models';
 import { AssignerOptions, FieldConfigTypes } from '../assigner.interfaces';
 import { localStateStore } from '../LocalStateStore';
 import { MongooseIdAssigner } from '../MongooseIdAssigner';
 
-afterAll(async () => {
-  await demoDB.close();
-});
+const mongoose = getMongoose();
 
-afterEach(() => demoDB.dropDatabase());
+afterAll(async () => {
+  await mongoose.disconnect();
+});
 
 describe('MongooseIdAssigner', () => {
   let exampleSchema: Schema;
+  let exampleModel: Model;
 
   beforeEach(() => {
     exampleSchema = getSchema(1);
     localStateStore.clear();
   });
 
+  afterEach(async () => mongoose.connection.dropDatabase());
+
   it('should assign _id field if only modelName option passed', async () => {
     exampleSchema.plugin(MongooseIdAssigner.plugin, { modelName: 'example1' });
 
-    const exampleModel = demoDB.model('example1', exampleSchema);
+    exampleModel = mongoose.model('example1', exampleSchema);
 
     const doc = await exampleModel.create({ personId: 'mernxl' });
 
@@ -36,7 +40,7 @@ describe('MongooseIdAssigner', () => {
 
     expect(plugin).toBeInstanceOf(MongooseIdAssigner);
 
-    const exampleModel = demoDB.model('example2', exampleSchema);
+    exampleModel = mongoose.model('example2', exampleSchema);
 
     const doc = await exampleModel.create({ personId: 'mernxl' });
 
@@ -50,7 +54,7 @@ describe('MongooseIdAssigner', () => {
 
     expect(plugin).toBeInstanceOf(MongooseIdAssigner);
 
-    const exampleModel = demoDB.model('example3', exampleSchema);
+    exampleModel = mongoose.model('example3', exampleSchema);
 
     const doc = await exampleModel.create({ personId: 'mernxl' });
 
@@ -69,7 +73,7 @@ describe('MongooseIdAssigner', () => {
       },
     });
 
-    const exampleModel = demoDB.model('example4', exampleSchema);
+    exampleModel = mongoose.model('example4', exampleSchema);
 
     try {
       const doc = await exampleModel.create({ personId: 'mernxl' });
@@ -97,7 +101,7 @@ describe('MongooseIdAssigner', () => {
     };
 
     exampleSchema.plugin(MongooseIdAssigner.plugin, options);
-    const exampleModel = demoDB.model('example5', exampleSchema);
+    exampleModel = mongoose.model('example5', exampleSchema);
 
     const doc = await exampleModel.create({ personId: 'mernxl' });
     const doc2 = await exampleModel.create({ personId: 'mernxl' });
@@ -147,7 +151,7 @@ describe('MongooseIdAssigner', () => {
     try {
       const plugin = MongooseIdAssigner.plugin(exampleSchema, options);
 
-      const exampleModel = demoDB.model('example6', exampleSchema);
+      exampleModel = mongoose.model('example6', exampleSchema);
 
       // initialise to ensure that
       // model is set and db is connected

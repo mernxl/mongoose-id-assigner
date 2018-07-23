@@ -27,9 +27,9 @@ const DroidSchema = new Schema({
   model: String,
 });
 
-export const demoDB = createConnection('mongodb://localhost:27017/demoDB', {
+/*export const mongoose = createConnection('mongodb://localhost:27017/demoDB', {
   useNewUrlParser: true,
-});
+});*/
 
 export function getSchema(index: number) {
   const schema = [ExampleSchema, CharacterSchema, DroidSchema];

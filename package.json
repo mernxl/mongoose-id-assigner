@@ -41,10 +41,12 @@
   "devDependencies": {
     "@types/event-to-promise": "^0.7.0",
     "@types/jest": "^23.3.0",
+    "@types/mongodb-memory-server": "^1.8.0",
     "@types/mongoose": "^5.2.1",
     "@types/uuid": "^3.4.3",
     "babel-core": "^6.26.3",
     "jest": "^23.4.1",
+    "mongodb-memory-server": "^1.9.0",
     "prettier": "^1.13.7",
     "rimraf": "^2.6.2",
     "ts-jest": "^23.0.1",
