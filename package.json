@@ -6,6 +6,18 @@
   "repository": "https://github.com/mernxl/mongoose-assign-id.git",
   "author": "mernxl <mernxl@gmail.com>",
   "license": "MIT",
+  "keywords": [
+    "mongodb",
+    "mongoose",
+    "uuid",
+    "objectid",
+    "auto-increment",
+    "incrementer",
+    "bson",
+    "document",
+    "unique-id",
+    "auto-generate"
+  ],
   "scripts": {
     "build": "yarn run clean && yarn run tsc -d",
     "tsc": "tsc",

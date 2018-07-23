@@ -1,3 +1,8 @@
-.DS_Store
 *.log
 src
+.idea
+coverage
+yarn.lock
+tslint.json
+.travis.yml
+.prettierrc
