@@ -84,7 +84,8 @@ interface NumberFieldConfig {
 
 interface UUIDFieldConfig {
   type: 'UUID' | 'GUID';
-  version: number; // supports 1 and 4
+  asBinary?: boolean; // default string
+  version?: number; // supports 1 and 4, default 1
   versionOptions?: any;
 }
 ```
@@ -190,6 +191,7 @@ describe('MongooseIdAssigner', () => {
         uuidFieldBuffer: {
           type: FieldConfigTypes.UUID,
           version: 1,
+          asBinary: true,
         },
         objectIdField: FieldConfigTypes.ObjectId,
       },
@@ -224,7 +226,7 @@ describe('MongooseIdAssigner', () => {
         expect(personId).toMatch(/(SPEC-7382-4344-3)\d+/);
         expect(objectIdField).toBeInstanceOf(mongoose.Types.ObjectId);
         expect(typeof uuidFieldString).toBe('string');
-        expect(uuidFieldBuffer).toBeInstanceOf(Buffer);
+        expect(uuidFieldBuffer).toBeInstanceOf(Binary);
 
         for (const cDoc of docs) {
           if (_id === cDoc._id) {

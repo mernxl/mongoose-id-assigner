@@ -18,12 +18,13 @@ function checkIdOptions(
   }
 
   if (isUUID(options)) {
-    if (!options.version || !(options.version === 4 || options.version === 1)) {
-      throwPluginError(
-        `UUID version is required and must be either 4 or 1!`,
-        modelName,
-        field,
-      );
+    if (!options.version) {
+      options.version = 1;
+      options.asBinary = !!options.asBinary;
+    }
+
+    if (!(options.version === 4 || options.version === 1)) {
+      throwPluginError(`UUID version must be either 1 or 4!`, modelName, field);
     }
     return false;
   }

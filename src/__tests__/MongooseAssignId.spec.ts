@@ -1,3 +1,4 @@
+import { Binary } from 'bson';
 import { Schema, Types } from 'mongoose';
 import { demoDB, getSchema } from '../__mock__/test.models';
 import { AssignerOptions, FieldConfigTypes } from '../assigner.interfaces';
@@ -87,7 +88,11 @@ describe('MongooseIdAssigner', () => {
         photoId: 44444,
         emailId: '55555',
         personId: '66666',
-        uuidField: 'UUID',
+        uuidField: {
+          type: FieldConfigTypes.GUID,
+          asBinary: true,
+          version: 4,
+        },
       },
     };
 
@@ -113,8 +118,8 @@ describe('MongooseIdAssigner', () => {
       expect.arrayContaining(['66666', '66667']),
     );
     expect((doc as any).uuidField).not.toBe((doc2 as any).uuidField);
-    expect((doc as any).uuidField).toBeInstanceOf(Buffer);
-    expect((doc2 as any).uuidField).toBeInstanceOf(Buffer);
+    expect((doc as any).uuidField).toBeInstanceOf(Binary);
+    expect((doc2 as any).uuidField).toBeInstanceOf(Binary);
   });
 
   it('should be robust enough to avoid duplicates', async () => {
@@ -133,6 +138,7 @@ describe('MongooseIdAssigner', () => {
         uuidFieldBuffer: {
           type: FieldConfigTypes.UUID,
           version: 1,
+          asBinary: true,
         },
         objectIdField: FieldConfigTypes.ObjectId,
       },
@@ -167,7 +173,7 @@ describe('MongooseIdAssigner', () => {
         expect(personId).toMatch(/(SPEC-7382-4344-3)\d+/);
         expect(objectIdField).toBeInstanceOf(Types.ObjectId);
         expect(typeof uuidFieldString).toBe('string');
-        expect(uuidFieldBuffer).toBeInstanceOf(Buffer);
+        expect(uuidFieldBuffer).toBeInstanceOf(Binary);
 
         for (const cDoc of docs) {
           if (_id === cDoc._id) {
