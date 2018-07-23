@@ -131,6 +131,8 @@ export function normaliseOptions(
         fieldOptions === FieldTypes.GUID
       ) {
         fieldOptions = { type: FieldTypes.UUID, version: 4 };
+      } else if (fieldOptions === FieldTypes.ObjectId) {
+        fieldOptions = { type: FieldTypes.ObjectId };
       } else {
         normalised.network = true;
         fieldOptions = { type: FieldTypes.String, nextId: fieldOptions };
