@@ -1,11 +1,11 @@
-import { NumberOptions } from '../../assigner.interfaces';
+import { NumberFieldConfig } from '../../assigner.interfaces';
 import { MongooseIdAssigner } from '../../MongooseIdAssigner';
 import { waitPromise } from '../index';
 
 export async function getNextIdNumber(
   field: string,
   idAssigner: MongooseIdAssigner,
-  options: NumberOptions,
+  options: NumberFieldConfig,
   retries = 1,
   getOnly = false,
 ): Promise<number> {

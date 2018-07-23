@@ -1,8 +1,8 @@
 import {
-  AssignIdPluginOptions,
-  FieldTypes,
-  IdOptions,
-  StringOptions,
+  AssignerOptions,
+  FieldConfig,
+  FieldConfigTypes,
+  StringFieldConfig,
 } from '../assigner.interfaces';
 import { NormalisedOptions } from '../MongooseIdAssigner';
 import { throwPluginError } from './others';
@@ -11,7 +11,7 @@ import { isNumber, isObjectId, isString, isUUID } from './type-guards';
 function checkIdOptions(
   modelName: string,
   field: string,
-  options: IdOptions,
+  options: FieldConfig,
 ): boolean {
   if (isObjectId(options)) {
     return false;
@@ -40,8 +40,8 @@ function checkIdOptions(
   }
 
   if (
-    (options as StringOptions).incFn &&
-    typeof (options as StringOptions).incFn !== 'function'
+    (options as StringFieldConfig).incFn &&
+    typeof (options as StringFieldConfig).incFn !== 'function'
   ) {
     throwPluginError('incFn must be a `Function`!', modelName, field);
   }
@@ -81,7 +81,7 @@ function checkIdOptions(
 }
 
 export function normaliseOptions(
-  options: AssignIdPluginOptions,
+  options: AssignerOptions,
   discriminator = false,
 ): NormalisedOptions {
   if (!options) {
@@ -103,7 +103,7 @@ export function normaliseOptions(
     network: false,
   };
 
-  const fields: Map<string, IdOptions> = new Map();
+  const fields: Map<string, FieldConfig> = new Map();
 
   if (!options.fields['_id']) {
     options.fields['_id'] = { type: 'ObjectId' };
@@ -117,32 +117,32 @@ export function normaliseOptions(
     let fieldOptions = options.fields[field];
 
     if (typeof fieldOptions === 'boolean') {
-      fieldOptions = { type: FieldTypes.ObjectId };
+      fieldOptions = { type: FieldConfigTypes.ObjectId };
     }
 
     if (typeof fieldOptions === 'number') {
       normalised.network = true;
-      fieldOptions = { type: FieldTypes.Number, nextId: fieldOptions };
+      fieldOptions = { type: FieldConfigTypes.Number, nextId: fieldOptions };
     }
 
     if (typeof fieldOptions === 'string') {
       if (
-        fieldOptions === FieldTypes.UUID ||
-        fieldOptions === FieldTypes.GUID
+        fieldOptions === FieldConfigTypes.UUID ||
+        fieldOptions === FieldConfigTypes.GUID
       ) {
-        fieldOptions = { type: FieldTypes.UUID, version: 4 };
-      } else if (fieldOptions === FieldTypes.ObjectId) {
-        fieldOptions = { type: FieldTypes.ObjectId };
+        fieldOptions = { type: FieldConfigTypes.UUID, version: 4 };
+      } else if (fieldOptions === FieldConfigTypes.ObjectId) {
+        fieldOptions = { type: FieldConfigTypes.ObjectId };
       } else {
         normalised.network = true;
-        fieldOptions = { type: FieldTypes.String, nextId: fieldOptions };
+        fieldOptions = { type: FieldConfigTypes.String, nextId: fieldOptions };
       }
     }
 
     if (
       // if not converted to Object already
       (fieldOptions && typeof fieldOptions !== 'object') ||
-      !FieldTypes[fieldOptions.type]
+      !FieldConfigTypes[fieldOptions.type]
     ) {
       throwPluginError(
         `Unknown Field Type for field [${field}]`,

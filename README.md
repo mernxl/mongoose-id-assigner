@@ -23,7 +23,7 @@ describe('MongooseIdAssigner', () => {
   });
 
   it('should be robust enough to avoid duplicates', async () => {
-    const options: AssignIdPluginOptions = {
+    const options: AssignerOptions = {
       modelName: 'person6',
       fields: {
         _id: '33333',

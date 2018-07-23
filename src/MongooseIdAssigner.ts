@@ -2,7 +2,7 @@ import * as eventToPromise from 'event-to-promise';
 import { EventEmitter } from 'events';
 import { Collection } from 'mongodb';
 import { Document, Model, Schema } from 'mongoose';
-import { AssignIdPluginOptions, IdOptions } from './assigner.interfaces';
+import { AssignerOptions, FieldConfig } from './assigner.interfaces';
 import { localStateStore, SchemaState } from './LocalStateStore';
 import {
   initialiseOptions,
@@ -16,7 +16,7 @@ import { configureSchema } from './utils/configure-schema';
 export interface NormalisedOptions {
   modelName: string;
   network: boolean;
-  fields?: Map<string, IdOptions>;
+  fields?: Map<string, FieldConfig>;
 }
 
 export class MongooseIdAssigner extends EventEmitter {
@@ -27,7 +27,7 @@ export class MongooseIdAssigner extends EventEmitter {
   public readonly modelName: string;
   public readonly options: NormalisedOptions;
 
-  constructor(schema: Schema, options: AssignIdPluginOptions) {
+  constructor(schema: Schema, options: AssignerOptions) {
     super();
     if (!schema) {
       throwPluginError('Provide a schema for the plugin!');
@@ -64,7 +64,7 @@ export class MongooseIdAssigner extends EventEmitter {
     return localStateStore.getState(this.schema) as any;
   }
 
-  get collection(): Collection<AssignIdPluginOptions> {
+  get collection(): Collection<AssignerOptions> {
     const { model, error } = this.state;
     if (!model) {
       if (error) {
@@ -78,7 +78,7 @@ export class MongooseIdAssigner extends EventEmitter {
     );
   }
 
-  static plugin(schema: Schema, options: AssignIdPluginOptions) {
+  static plugin(schema: Schema, options: AssignerOptions) {
     return new MongooseIdAssigner(schema, options);
   }
 

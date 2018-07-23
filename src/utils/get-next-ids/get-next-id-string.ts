@@ -1,4 +1,4 @@
-import { StringOptions } from '../../assigner.interfaces';
+import { StringFieldConfig } from '../../assigner.interfaces';
 import { MongooseIdAssigner } from '../../MongooseIdAssigner';
 import { waitPromise } from '../index';
 import { stringIncrementer } from './utils/string-incrementer';
@@ -6,7 +6,7 @@ import { stringIncrementer } from './utils/string-incrementer';
 export async function getNextIdString(
   field: string,
   idAssigner: MongooseIdAssigner,
-  options: StringOptions,
+  options: StringFieldConfig,
   retries = 1,
   getOnly = false,
 ): Promise<string> {

@@ -1,10 +1,10 @@
 import {
-  DefaultOptions,
-  FieldTypes,
-  IdOptions,
-  NumberOptions,
-  StringOptions,
-  UUIDOptions,
+  DefaultFieldConfig,
+  FieldConfig,
+  FieldConfigTypes,
+  NumberFieldConfig,
+  StringFieldConfig,
+  UUIDFieldConfig,
 } from '../assigner.interfaces';
 
 /*export function isDiscriminator(
@@ -14,28 +14,28 @@ import {
  }*/
 
 export function isObjectId(
-  options: IdOptions | string | number | boolean | 'GUID' | 'UUID',
-): options is DefaultOptions {
-  return (options as IdOptions).type === FieldTypes.ObjectId;
+  options: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
+): options is DefaultFieldConfig {
+  return (options as FieldConfig).type === FieldConfigTypes.ObjectId;
 }
 
 export function isString(
-  options: IdOptions | string | number | boolean | 'GUID' | 'UUID',
-): options is StringOptions {
-  return (options as IdOptions).type === FieldTypes.String;
+  options: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
+): options is StringFieldConfig {
+  return (options as FieldConfig).type === FieldConfigTypes.String;
 }
 
 export function isNumber(
-  options: IdOptions | string | number | boolean | 'GUID' | 'UUID',
-): options is NumberOptions {
-  return (options as IdOptions).type === FieldTypes.Number;
+  options: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
+): options is NumberFieldConfig {
+  return (options as FieldConfig).type === FieldConfigTypes.Number;
 }
 
 export function isUUID(
-  options: IdOptions | string | number | boolean | 'GUID' | 'UUID',
-): options is UUIDOptions {
+  options: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
+): options is UUIDFieldConfig {
   return (
-    (options as IdOptions).type === FieldTypes.UUID ||
-    (options as IdOptions).type === FieldTypes.GUID
+    (options as FieldConfig).type === FieldConfigTypes.UUID ||
+    (options as FieldConfig).type === FieldConfigTypes.GUID
   );
 }
