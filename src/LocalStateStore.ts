@@ -24,10 +24,6 @@ export class LocalStateStore {
     LocalStateStore._instance = this;
   }
 
-  static getStore() {
-    return this._instance || new LocalStateStore();
-  }
-
   getState(schema: Schema) {
     return this.stateMap.get(schema);
   }
