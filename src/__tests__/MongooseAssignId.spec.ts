@@ -1,5 +1,5 @@
 import { Binary } from 'bson';
-import { Model, Schema, Types } from 'mongoose';
+import { Document, Model, Schema, Types } from 'mongoose';
 import { getMongoose } from '../__mocks__/mongoose.config';
 import { getSchema } from '../__mocks__/test.models';
 import { AssignerOptions, FieldConfigTypes } from '../assigner.interfaces';
@@ -14,12 +14,23 @@ afterAll(async () => {
 
 describe('MongooseIdAssigner', () => {
   let exampleSchema: Schema;
-  let exampleModel: Model;
-
   beforeEach(() => {
     exampleSchema = getSchema(1);
     localStateStore.clear();
   });
+
+  describe('basics', () => {
+    it('should save state to localStateStore', () => {
+      const plugin = MongooseIdAssigner.plugin(exampleSchema, {
+        modelName: 'ex',
+      });
+
+      expect(localStateStore.getState(exampleSchema)).toBeDefined();
+      expect(plugin.state).toEqual(localStateStore.getState(exampleSchema));
+    });
+  });
+
+  let exampleModel: Model<Document>;
 
   afterEach(async () => mongoose.connection.dropDatabase());
 
