@@ -18,7 +18,7 @@ export class LocalStateStore {
   private stateMap: Map<Schema, SchemaState>;
 
   constructor() {
-    this.collName = 'm_assign_id';
+    this.collName = 'id_assigner';
     this.stateMap = new Map<Schema, SchemaState>();
 
     LocalStateStore._instance = this;
