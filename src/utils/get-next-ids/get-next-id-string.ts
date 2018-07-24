@@ -6,22 +6,22 @@ import { stringIncrementer } from './utils/string-incrementer';
 export async function getNextIdString(
   field: string,
   idAssigner: MongooseIdAssigner,
-  options: StringFieldConfig,
+  fieldConfig: StringFieldConfig,
   retries = 1,
   getOnly = false,
 ): Promise<string> {
-  const nextId = options.nextId;
+  const nextId = fieldConfig.nextId;
 
   if (getOnly) {
     return nextId;
   }
 
-  let incId = options.nextId;
+  let incId = fieldConfig.nextId;
 
-  if (options.incFn) {
-    incId = options.incFn(nextId);
+  if (fieldConfig.incFn) {
+    incId = fieldConfig.incFn(nextId);
   } else {
-    incId = stringIncrementer(nextId, options.separator);
+    incId = stringIncrementer(nextId, fieldConfig.separator);
   }
 
   try {
@@ -39,7 +39,7 @@ export async function getNextIdString(
       const multiplier = Math.abs(Math.random() * retries);
       await waitPromise(idAssigner.retryMillis * multiplier);
       await idAssigner.refreshOptions();
-      return getNextIdString(field, idAssigner, options, ++retries);
+      return getNextIdString(field, idAssigner, fieldConfig, ++retries);
     }
   } catch (e) {
     return Promise.reject(e);

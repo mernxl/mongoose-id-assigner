@@ -8,56 +8,54 @@ import { NormalisedOptions } from '../MongooseIdAssigner';
 import { throwPluginError } from './others';
 import { isNumber, isObjectId, isString, isUUID } from './type-guards';
 
-function checkIdOptions(
+function checkFieldConfig(
   modelName: string,
   field: string,
-  options: FieldConfig,
+  config: FieldConfig,
 ): boolean {
-  if (isObjectId(options)) {
+  if (isObjectId(config)) {
     return false;
   }
 
-  if (isUUID(options)) {
-    if (!options.version) {
-      options.version = 1;
-      options.asBinary = !!options.asBinary;
+  if (isUUID(config)) {
+    if (!config.version) {
+      config.version = 1;
+      config.asBinary = !!config.asBinary;
     }
 
-    if (!(options.version === 4 || options.version === 1)) {
+    if (!(config.version === 4 || config.version === 1)) {
       throwPluginError(`UUID version must be either 1 or 4!`, modelName, field);
     }
     return false;
   }
 
   if (
-    !(options as any).nextId ||
-    typeof (options as any).nextId !== options.type.toLowerCase()
+    !(config as any).nextId ||
+    typeof (config as any).nextId !== config.type.toLowerCase()
   ) {
     throwPluginError(
-      'nextId is required, should have as type ' + options.type,
+      'nextId is required, should have as type ' + config.type,
       modelName,
       field,
     );
   }
 
   if (
-    (options as StringFieldConfig).incFn &&
-    typeof (options as StringFieldConfig).incFn !== 'function'
+    (config as StringFieldConfig).incFn &&
+    typeof (config as StringFieldConfig).incFn !== 'function'
   ) {
     throwPluginError('incFn must be a `Function`!', modelName, field);
   }
 
-  if (isNumber(options) && options.incFn) {
-    if (options.incrementBy && typeof options.incrementBy !== 'number') {
+  if (isNumber(config) && config.incFn) {
+    if (config.incrementBy && typeof config.incrementBy !== 'number') {
       throwPluginError(
         'incrementBy must be of type `number`!',
         modelName,
         field,
       );
     }
-    if (
-      typeof options.incFn(options.nextId, options.incrementBy) !== 'number'
-    ) {
+    if (typeof config.incFn(config.nextId, config.incrementBy) !== 'number') {
       throwPluginError(
         'incFn must return nextId of type `number`!',
         modelName,
@@ -67,8 +65,8 @@ function checkIdOptions(
     return true;
   }
 
-  if (isString(options) && options.incFn) {
-    if (typeof options.incFn(options.nextId) !== 'string') {
+  if (isString(config) && config.incFn) {
+    if (typeof config.incFn(config.nextId) !== 'string') {
       throwPluginError(
         'incFn must return nextId of type `string`!',
         modelName,
@@ -90,9 +88,7 @@ export function normaliseOptions(
   }
 
   if (!options.modelName) {
-    throw new Error(
-      '[MongooseIdAssigner] Plugin Option `modelName` must be defined',
-    );
+    throw new Error('[MongooseIdAssigner] Plugin `modelName` must be defined');
   }
 
   if (!options.fields) {
@@ -115,35 +111,35 @@ export function normaliseOptions(
       continue;
     }
 
-    let fieldOptions = options.fields[field];
+    let fieldConfig = options.fields[field];
 
-    if (typeof fieldOptions === 'boolean') {
-      fieldOptions = { type: FieldConfigTypes.ObjectId };
+    if (typeof fieldConfig === 'boolean') {
+      fieldConfig = { type: FieldConfigTypes.ObjectId };
     }
 
-    if (typeof fieldOptions === 'number') {
+    if (typeof fieldConfig === 'number') {
       normalised.network = true;
-      fieldOptions = { type: FieldConfigTypes.Number, nextId: fieldOptions };
+      fieldConfig = { type: FieldConfigTypes.Number, nextId: fieldConfig };
     }
 
-    if (typeof fieldOptions === 'string') {
+    if (typeof fieldConfig === 'string') {
       if (
-        fieldOptions === FieldConfigTypes.UUID ||
-        fieldOptions === FieldConfigTypes.GUID
+        fieldConfig === FieldConfigTypes.UUID ||
+        fieldConfig === FieldConfigTypes.GUID
       ) {
-        fieldOptions = { type: FieldConfigTypes.UUID, version: 4 };
-      } else if (fieldOptions === FieldConfigTypes.ObjectId) {
-        fieldOptions = { type: FieldConfigTypes.ObjectId };
+        fieldConfig = { type: FieldConfigTypes.UUID, version: 4 };
+      } else if (fieldConfig === FieldConfigTypes.ObjectId) {
+        fieldConfig = { type: FieldConfigTypes.ObjectId };
       } else {
         normalised.network = true;
-        fieldOptions = { type: FieldConfigTypes.String, nextId: fieldOptions };
+        fieldConfig = { type: FieldConfigTypes.String, nextId: fieldConfig };
       }
     }
 
     if (
       // if not converted to Object already
-      (fieldOptions && typeof fieldOptions !== 'object') ||
-      !FieldConfigTypes[fieldOptions.type]
+      (fieldConfig && typeof fieldConfig !== 'object') ||
+      !FieldConfigTypes[fieldConfig.type]
     ) {
       throwPluginError(
         `Unknown Field Type for field [${field}]`,
@@ -151,14 +147,14 @@ export function normaliseOptions(
       );
     }
 
-    if (fieldOptions && typeof fieldOptions === 'object') {
-      const network = checkIdOptions(options.modelName, field, fieldOptions);
+    if (fieldConfig && typeof fieldConfig === 'object') {
+      const network = checkFieldConfig(options.modelName, field, fieldConfig);
       if (network) {
         normalised.network = true;
       }
     }
 
-    fields.set(field, fieldOptions);
+    fields.set(field, fieldConfig);
   }
 
   normalised.fields = fields;

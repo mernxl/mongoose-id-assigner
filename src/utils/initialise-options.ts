@@ -4,8 +4,8 @@ import { localStateStore } from '../LocalStateStore';
 import { MongooseIdAssigner, NormalisedOptions } from '../MongooseIdAssigner';
 import { isNumber, isString } from './type-guards';
 
-// checks if options changed, update field initialIds
-// checks if options contains no field configs, changes = false
+// checks if fieldConfigs changed, update field nextIds only
+// checks if AssignerOptions contains no field configs, changes = false
 export function checkAndUpdateOptions(
   options: NormalisedOptions,
   dbOptions?: NormalisedOptions,
@@ -22,19 +22,19 @@ export function checkAndUpdateOptions(
   }
 
   const rObject = { config: false, options };
-  for (const [field, option] of options.fields.entries()) {
-    const oldOption = (dbOptions as any).fields[field];
-    if (isNumber(option) && oldOption && isNumber(oldOption)) {
-      if (oldOption && option.nextId !== oldOption.nextId) {
+  for (const [field, config] of options.fields.entries()) {
+    const oldConfig = (dbOptions as any).fields[field];
+    if (isNumber(config) && oldConfig && isNumber(oldConfig)) {
+      if (oldConfig && config.nextId !== oldConfig.nextId) {
         rObject.config = true;
-        option.nextId = oldOption.nextId;
+        config.nextId = oldConfig.nextId;
       }
     }
 
-    if (isString(option) && oldOption && isString(oldOption)) {
-      if (oldOption && option.nextId !== oldOption.nextId) {
+    if (isString(config) && oldConfig && isString(oldConfig)) {
+      if (oldConfig && config.nextId !== oldConfig.nextId) {
         rObject.config = true;
-        option.nextId = oldOption.nextId;
+        config.nextId = oldConfig.nextId;
       }
     }
   }

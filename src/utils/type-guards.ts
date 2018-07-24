@@ -14,28 +14,28 @@ import {
  }*/
 
 export function isObjectId(
-  options: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
-): options is DefaultFieldConfig {
-  return (options as FieldConfig).type === FieldConfigTypes.ObjectId;
+  config: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
+): config is DefaultFieldConfig {
+  return (config as FieldConfig).type === FieldConfigTypes.ObjectId;
 }
 
 export function isString(
-  options: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
-): options is StringFieldConfig {
-  return (options as FieldConfig).type === FieldConfigTypes.String;
+  config: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
+): config is StringFieldConfig {
+  return (config as FieldConfig).type === FieldConfigTypes.String;
 }
 
 export function isNumber(
-  options: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
-): options is NumberFieldConfig {
-  return (options as FieldConfig).type === FieldConfigTypes.Number;
+  config: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
+): config is NumberFieldConfig {
+  return (config as FieldConfig).type === FieldConfigTypes.Number;
 }
 
 export function isUUID(
-  options: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
-): options is UUIDFieldConfig {
+  config: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
+): config is UUIDFieldConfig {
   return (
-    (options as FieldConfig).type === FieldConfigTypes.UUID ||
-    (options as FieldConfig).type === FieldConfigTypes.GUID
+    (config as FieldConfig).type === FieldConfigTypes.UUID ||
+    (config as FieldConfig).type === FieldConfigTypes.GUID
   );
 }

@@ -44,10 +44,10 @@ export type FieldConfig = {
   | UUIDFieldConfig);
 
 /**
- * fieldOption = string, then nextId = string, default incrementer,
- * fieldOption = number, then nextId = number, incrementBy = 1
- * fieldOption = boolean(true), then fieldType = ObjectId
- * fieldOption = GUID | UUID, then use UUID v4
+ * fieldConfig = string, then nextId = string, default incrementer,
+ * fieldConfig = number, then nextId = number, incrementBy = 1
+ * fieldConfig = boolean(true), then fieldType = ObjectId
+ * fieldConfig = GUID | UUID, then use UUID v4
  */
 export interface AssignerFieldsConfigMap {
   [fieldName: string]:
@@ -60,7 +60,8 @@ export interface AssignerFieldsConfigMap {
 }
 
 /**
- * If Option does not contain an AssignerFieldsConfigMap, then we use the config options for _id
+ * If Options does not contain fields(AssignerFieldsConfigMap),
+ * Then setup assigner for _id field, does not use network
  */
 export interface AssignerOptions {
   modelName: string;

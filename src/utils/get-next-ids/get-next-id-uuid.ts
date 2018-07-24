@@ -1,10 +1,11 @@
 import { Binary } from 'mongodb';
 import { UUIDFieldConfig } from '../../assigner.interfaces';
 
-export function getNextIdUUID(options: UUIDFieldConfig) {
-  const uuid = options.version === 4 ? require('uuid/v4') : require('uuid/v1');
+export function getNextIdUUID(fieldConfig: UUIDFieldConfig) {
+  const uuid =
+    fieldConfig.version === 4 ? require('uuid/v4') : require('uuid/v1');
 
-  const UUID = uuid(options.versionOptions);
+  const UUID = uuid(fieldConfig.versionOptions);
 
-  return options.asBinary ? new Binary(UUID, Binary.SUBTYPE_UUID) : UUID;
+  return fieldConfig.asBinary ? new Binary(UUID, Binary.SUBTYPE_UUID) : UUID;
 }

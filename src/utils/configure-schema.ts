@@ -12,13 +12,13 @@ function configureIndexes(assignId: MongooseIdAssigner) {
     return;
   }
 
-  for (const [field, options] of fields.entries()) {
+  for (const [field, config] of fields.entries()) {
     if (field === '_id') {
       continue;
     }
 
-    if (options.index) {
-      schema.index({ [field]: -1 }, { unique: options.unique });
+    if (config.index) {
+      schema.index({ [field]: -1 }, { unique: config.unique });
     }
   }
 }

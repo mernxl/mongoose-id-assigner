@@ -20,7 +20,7 @@ export async function refreshOptions(
       modelName: assigner.modelName,
     });
 
-    if (!freshOptions && assigner.readyState) {
+    if (!freshOptions && assigner.options.network && assigner.readyState) {
       throwPluginError(
         'Stored Options not Found for Ready Model!',
         assigner.modelName,
@@ -48,26 +48,26 @@ export async function assignIdNetwork(
 
   try {
     const fields = idAssigner.options.fields;
-    for (const [field, options] of fields) {
-      if (isObjectId(options)) {
+    for (const [field, config] of fields) {
+      if (isObjectId(config)) {
         (doc as any)[field] = new ObjectId();
         continue;
       }
 
-      if (isUUID(options)) {
-        (doc as any)[field] = getNextIdUUID(options);
+      if (isUUID(config)) {
+        (doc as any)[field] = getNextIdUUID(config);
         continue;
       }
 
       await idAssigner.refreshOptions();
 
-      if (isNumber(options)) {
-        (doc as any)[field] = await getNextIdNumber(field, idAssigner, options);
+      if (isNumber(config)) {
+        (doc as any)[field] = await getNextIdNumber(field, idAssigner, config);
         continue;
       }
 
-      if (isString(options)) {
-        (doc as any)[field] = await getNextIdString(field, idAssigner, options);
+      if (isString(config)) {
+        (doc as any)[field] = await getNextIdString(field, idAssigner, config);
       }
     }
   } catch (e) {
@@ -85,14 +85,14 @@ export function assignIdNoNetwork(
     return;
   }
 
-  for (const [field, options] of fields.entries()) {
-    if (isObjectId(options)) {
+  for (const [field, config] of fields.entries()) {
+    if (isObjectId(config)) {
       (doc as any)[field] = new ObjectId();
       continue;
     }
 
-    if (isUUID(options)) {
-      (doc as any)[field] = getNextIdUUID(options);
+    if (isUUID(config)) {
+      (doc as any)[field] = getNextIdUUID(config);
     }
   }
 }

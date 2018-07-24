@@ -5,22 +5,22 @@ import { waitPromise } from '../index';
 export async function getNextIdNumber(
   field: string,
   idAssigner: MongooseIdAssigner,
-  options: NumberFieldConfig,
+  fieldConfig: NumberFieldConfig,
   retries = 1,
   getOnly = false,
 ): Promise<number> {
-  const nextId = options.nextId;
+  const nextId = fieldConfig.nextId;
 
   if (getOnly) {
     return nextId;
   }
 
-  let genId = options.nextId;
+  let genId = fieldConfig.nextId;
 
-  if (options.incFn) {
-    genId = options.incFn(nextId, options.incrementBy);
+  if (fieldConfig.incFn) {
+    genId = fieldConfig.incFn(nextId, fieldConfig.incrementBy);
   } else {
-    genId = nextId + (options.incrementBy ? options.incrementBy : 1);
+    genId = nextId + (fieldConfig.incrementBy ? fieldConfig.incrementBy : 1);
   }
 
   try {
@@ -38,7 +38,7 @@ export async function getNextIdNumber(
       const multiplier = Math.abs(Math.random() * retries);
       await waitPromise(idAssigner.retryMillis * multiplier);
       await idAssigner.refreshOptions();
-      return getNextIdNumber(field, idAssigner, options, ++retries);
+      return getNextIdNumber(field, idAssigner, fieldConfig, ++retries);
     }
   } catch (e) {
     return Promise.reject(e);
