@@ -63,8 +63,8 @@ const ExampleModel = mongoose.model('ExampleModel', ExampleSchema);
 
 const doc = await ExampleModel.create({name: 'Mernxl'})
 
-console.log(doc._id)   --->   5b57a1d929239e59b4e3d7f3     // schema field type is String
-console.log(doc.uuidFieldString)   --->   7729e2e0-8f8b-11e8-882d-2dade78bb893
+console.log(doc._id)   --->   '5b57a1d929239e59b4e3d7f3'     // schema field type is String
+console.log(doc.uuidFieldString)   --->   '7729e2e0-8f8b-11e8-882d-2dade78bb893'
 ```
 
 **Method 2**: Request Assigner Instance, If you have initialisation logic, you need to initialise the plugin.
@@ -91,12 +91,12 @@ ExampleIA.initialise(ExampleModel)
   .then((readyCode) => {
     const doc1 = await ExampleModel.create({name: 'Mongoose'});
     
-    console.log(doc1._id)   --->   5b57a1d929239e59b4e3d7f3
+    console.log(doc1._id)   --->   '5b57a1d929239e59b4e3d7f3'
     console.log(doc1.photoId)   --->   0000
     
     const doc2 = await ExampleModel.create({name: 'IdAssigner'});
     
-    console.log(doc1._id)   --->   5b57a3612000c406eceaefc2
+    console.log(doc1._id)   --->   '5b57a3612000c406eceaefc2'
     console.log(doc1.photoId)   --->   0004
   })
   .catch((error) => /* ... Error at initialisation process, do error stuff */)
@@ -133,12 +133,12 @@ ExampleIA.initialise(ExampleModel)
   .then((readyCode) => {
     const doc1 = await ExampleModel.create({name: 'Mongoose'});
     
-    console.log(doc1._id)   --->   34T5565
+    console.log(doc1._id)   --->   '34T5565'
     console.log(doc1.uuidFieldBuffer)   --->  Binary { _bsontype: 'Binary', sub_type: 4, position: 36, buffer: B... }
     
     const doc2 = await ExampleModel.create({name: 'IdAssigner'});
     
-    console.log(doc1._id)   --->   34T5566
+    console.log(doc1._id)   --->   '34T5566'
     console.log(doc1.uuidFieldBuffer)   --->   Binary { _bsontype: 'Binary', sub_type: 4, position: 36, buffer: B... }
   })
   .catch((error) => /* ... do error stuff */)
