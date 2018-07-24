@@ -206,4 +206,40 @@ describe('MongooseIdAssigner', () => {
       expect(e).toBeUndefined();
     }
   });
+
+  it('should use nextIdFunction passed at fieldConfig', async () => {
+    const options: AssignerOptions = {
+      modelName: 'example7',
+      fields: {
+        _id: '33333',
+        photoId: {
+          type: FieldConfigTypes.Number,
+          nextId: 44444,
+          nextIdFunction: (nextId: number) => nextId + 2,
+        },
+        personId: {
+          type: FieldConfigTypes.String,
+          nextId: '55555',
+          nextIdFunction: (nextId: string) =>
+            (parseInt(nextId, 10) + 2).toString(),
+        },
+      },
+    };
+
+    try {
+      MongooseIdAssigner.plugin(exampleSchema, options);
+
+      exampleModel = mongoose.model('example7', exampleSchema);
+
+      const doc1 = await exampleModel.create({ personId: 'placeholder' });
+      const doc2 = await exampleModel.create({ personId: 'placeholder' });
+
+      expect((doc1 as any).photoId).toBe(44444);
+      expect((doc1 as any).personId).toBe('55555');
+      expect((doc2 as any).photoId).toBe(44446);
+      expect((doc2 as any).personId).toBe('55557');
+    } catch (e) {
+      expect(e).toBeUndefined();
+    }
+  });
 });

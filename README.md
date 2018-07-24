@@ -75,14 +75,14 @@ interface StringFieldConfig {
   type: 'String';
   nextId: string;
   separator?: string;
-  incFn?: (nextId: string) => string;
+  nextIdFunction?: (nextId: string) => string;
 }
 
 interface NumberFieldConfig {
   type: 'Number';
   nextId: number;
   incrementBy?: number;
-  incFn?: (nextId: number, incrementBy?: number) => number;
+  nextIdFunction?: (nextId: number, incrementBy?: number) => number;
 }
 
 interface UUIDFieldConfig {

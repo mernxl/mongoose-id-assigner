@@ -16,12 +16,12 @@ export async function getNextIdString(
     return nextId;
   }
 
-  let incId = fieldConfig.nextId;
+  let afterNextId = fieldConfig.nextId;
 
-  if (fieldConfig.incFn) {
-    incId = fieldConfig.incFn(nextId);
+  if (fieldConfig.nextIdFunction) {
+    afterNextId = fieldConfig.nextIdFunction(nextId);
   } else {
-    incId = stringIncrementer(nextId, fieldConfig.separator);
+    afterNextId = stringIncrementer(nextId, fieldConfig.separator);
   }
 
   try {
@@ -31,7 +31,7 @@ export async function getNextIdString(
         modelName: idAssigner.modelName,
         [updateField]: nextId,
       },
-      { $set: { [updateField]: incId } },
+      { $set: { [updateField]: afterNextId } },
       { projection: { value: 1 } },
     );
 

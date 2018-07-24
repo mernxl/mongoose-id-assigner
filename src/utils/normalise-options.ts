@@ -20,8 +20,8 @@ function checkFieldConfig(
   if (isUUID(config)) {
     if (!config.version) {
       config.version = 1;
-      config.asBinary = !!config.asBinary;
     }
+    config.asBinary = !!config.asBinary;
 
     if (!(config.version === 4 || config.version === 1)) {
       throwPluginError(`UUID version must be either 1 or 4!`, modelName, field);
@@ -41,13 +41,13 @@ function checkFieldConfig(
   }
 
   if (
-    (config as StringFieldConfig).incFn &&
-    typeof (config as StringFieldConfig).incFn !== 'function'
+    (config as StringFieldConfig).nextIdFunction &&
+    typeof (config as StringFieldConfig).nextIdFunction !== 'function'
   ) {
-    throwPluginError('incFn must be a `Function`!', modelName, field);
+    throwPluginError('nextIdFunction must be a `Function`!', modelName, field);
   }
 
-  if (isNumber(config) && config.incFn) {
+  if (isNumber(config) && config.nextIdFunction) {
     if (config.incrementBy && typeof config.incrementBy !== 'number') {
       throwPluginError(
         'incrementBy must be of type `number`!',
@@ -55,9 +55,12 @@ function checkFieldConfig(
         field,
       );
     }
-    if (typeof config.incFn(config.nextId, config.incrementBy) !== 'number') {
+    if (
+      typeof config.nextIdFunction(config.nextId, config.incrementBy) !==
+      'number'
+    ) {
       throwPluginError(
-        'incFn must return nextId of type `number`!',
+        'nextIdFunction must return nextId of type `number`!',
         modelName,
         field,
       );
@@ -65,10 +68,10 @@ function checkFieldConfig(
     return true;
   }
 
-  if (isString(config) && config.incFn) {
-    if (typeof config.incFn(config.nextId) !== 'string') {
+  if (isString(config) && config.nextIdFunction) {
+    if (typeof config.nextIdFunction(config.nextId) !== 'string') {
       throwPluginError(
-        'incFn must return nextId of type `string`!',
+        'nextIdFunction must return nextId of type `string`!',
         modelName,
         field,
       );
@@ -84,11 +87,11 @@ export function normaliseOptions(
   discriminator = false,
 ): NormalisedOptions {
   if (!options) {
-    throw new Error('[MongooseIdAssigner] Plugin Options not specified!');
+    throw throwPluginError('Plugin Options not specified!');
   }
 
   if (!options.modelName) {
-    throw new Error('[MongooseIdAssigner] Plugin `modelName` must be defined');
+    throw throwPluginError('Plugin `modelName` must be defined!');
   }
 
   if (!options.fields) {
@@ -127,7 +130,7 @@ export function normaliseOptions(
         fieldConfig === FieldConfigTypes.UUID ||
         fieldConfig === FieldConfigTypes.GUID
       ) {
-        fieldConfig = { type: FieldConfigTypes.UUID, version: 4 };
+        fieldConfig = { type: FieldConfigTypes.UUID, version: 1 };
       } else if (fieldConfig === FieldConfigTypes.ObjectId) {
         fieldConfig = { type: FieldConfigTypes.ObjectId };
       } else {

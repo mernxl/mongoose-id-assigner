@@ -14,14 +14,14 @@ export interface StringFieldConfig {
   type: 'String';
   nextId: string;
   separator?: string;
-  incFn?: (nextId: string) => string;
+  nextIdFunction?: (nextId: string) => string;
 }
 
 export interface NumberFieldConfig {
   type: 'Number';
   nextId: number;
   incrementBy?: number;
-  incFn?: (nextId: number, incrementBy?: number) => number;
+  nextIdFunction?: (nextId: number, incrementBy?: number) => number;
 }
 
 export interface UUIDFieldConfig {

@@ -37,7 +37,7 @@ describe('LocalStateStore', () => {
     });
   });
 
-  describe('setCollName()', async () => {
+  describe('setCollName()', () => {
     let exampleIA: MongooseIdAssigner;
 
     beforeAll(() => {
