@@ -1,4 +1,4 @@
-import { createConnection, Schema } from 'mongoose';
+import { Schema } from 'mongoose';
 
 const ExampleSchema = new Schema({
   _id: String,
@@ -26,10 +26,6 @@ const CharacterSchema = new Schema(
 const DroidSchema = new Schema({
   model: String,
 });
-
-/*export const mongoose = createConnection('mongodb://localhost:27017/demoDB', {
-  useNewUrlParser: true,
-});*/
 
 export function getSchema(index: number) {
   const schema = [ExampleSchema, CharacterSchema, DroidSchema];

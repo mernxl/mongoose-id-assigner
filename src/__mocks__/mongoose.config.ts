@@ -35,7 +35,7 @@ export function getMongoose() {
         mongoServer.stop();
       });
     };
-    mongoose.connect();
+    (mongoose as any).connect();
 
     return mongoose;
   } else {
