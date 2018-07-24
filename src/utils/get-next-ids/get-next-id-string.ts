@@ -1,6 +1,6 @@
 import { StringFieldConfig } from '../../assigner.interfaces';
 import { MongooseIdAssigner } from '../../MongooseIdAssigner';
-import { waitPromise } from '../index';
+import { throwPluginError, waitPromise } from '../index';
 import { stringIncrementer } from './utils/string-incrementer';
 
 export async function getNextIdString(
@@ -31,7 +31,10 @@ export async function getNextIdString(
         modelName: idAssigner.modelName,
         [updateField]: nextId,
       },
-      { $set: { [updateField]: afterNextId } },
+      {
+        $set: { [updateField]: afterNextId },
+        $currentDate: { timestamp: true },
+      },
       { projection: { value: 1 } },
     );
 
@@ -40,6 +43,12 @@ export async function getNextIdString(
       await waitPromise(idAssigner.retryMillis * multiplier);
       await idAssigner.refreshOptions();
       return getNextIdString(field, idAssigner, fieldConfig, ++retries);
+    } else if (!update.value && retries > idAssigner.retryTime) {
+      throwPluginError(
+        `Maximum retryTime to set value attained!`,
+        idAssigner.modelName,
+        field,
+      );
     }
   } catch (e) {
     return Promise.reject(e);

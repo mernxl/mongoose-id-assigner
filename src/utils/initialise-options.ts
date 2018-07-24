@@ -2,44 +2,143 @@ import * as eventToPromise from 'event-to-promise';
 import { Document, Model } from 'mongoose';
 import { localStateStore } from '../LocalStateStore';
 import { MongooseIdAssigner, NormalisedOptions } from '../MongooseIdAssigner';
+import { throwPluginError, waitPromise } from './others';
 import { isNumber, isString } from './type-guards';
 
+interface OptionsCheckResults {
+  abort?: boolean; // if no fresh, no options
+  replace?: boolean; // if there are replace to from fresh config
+  delete?: boolean; // if freshOptions exist, but local config doesn't need it.
+  options: NormalisedOptions;
+}
+
 // checks if fieldConfigs changed, update field nextIds only
-// checks if AssignerOptions contains no field configs, changes = false
+// checks if AssignerOptions contains no field configs, replace = false
 export function checkAndUpdateOptions(
   options: NormalisedOptions,
-  dbOptions?: NormalisedOptions,
-): { changes?: boolean; options: NormalisedOptions } {
-  if (!dbOptions || !dbOptions.fields) {
+  freshOptions?: NormalisedOptions,
+): OptionsCheckResults {
+  if (!freshOptions || !freshOptions.fields) {
     if (!options || !options.fields) {
-      return { changes: false, options };
+      return { abort: true, options };
+    } else {
+      options.timestamp = null;
+      return { replace: true, options };
     }
-    return { changes: true, options };
   }
 
+  // set timestamp
+  options.timestamp = freshOptions.timestamp;
+
+  // delete old options if new doesn't need it
   if (!options || !options.fields) {
-    return { changes: false, options };
+    return { delete: true, options };
   }
 
-  const rObject = { config: false, options };
+  const rObject = { replace: false, options };
   for (const [field, config] of options.fields.entries()) {
-    const oldConfig = (dbOptions as any).fields[field];
-    if (isNumber(config) && oldConfig && isNumber(oldConfig)) {
+    const oldConfig = (freshOptions as any).fields[field];
+
+    if (!oldConfig) {
+      rObject.replace = true;
+    }
+
+    if (isNumber(config) && isNumber(oldConfig)) {
       if (oldConfig && config.nextId !== oldConfig.nextId) {
-        rObject.config = true;
+        rObject.replace = true;
         config.nextId = oldConfig.nextId;
       }
     }
 
-    if (isString(config) && oldConfig && isString(oldConfig)) {
+    if (isString(config) && isString(oldConfig)) {
       if (oldConfig && config.nextId !== oldConfig.nextId) {
-        rObject.config = true;
+        rObject.replace = true;
         config.nextId = oldConfig.nextId;
       }
     }
   }
 
   return rObject;
+}
+
+async function refreshDBOptions(
+  mongooseModel: Model<Document>,
+  assignId: MongooseIdAssigner,
+  retries = 0,
+): Promise<number> {
+  const options = assignId.options;
+  try {
+    const freshOptions = await mongooseModel.db
+      .collection(localStateStore.getCollName())
+      .findOne({ modelName: options.modelName });
+
+    const mergedOptions = checkAndUpdateOptions(options, freshOptions);
+
+    if (mergedOptions.abort) {
+      assignId.appendState({
+        modelName: options.modelName,
+        readyState: 1,
+        model: mongooseModel,
+      });
+
+      return 1;
+    }
+
+    let update;
+
+    if (mergedOptions.replace) {
+      update = await mongooseModel.db
+        .collection(localStateStore.getCollName())
+        .findOneAndReplace(
+          {
+            modelName: options.modelName,
+            timestamp: mergedOptions.options.timestamp,
+          },
+          mergedOptions.options,
+          {
+            upsert: true,
+          },
+        );
+    } else if (mergedOptions.delete) {
+      update = await mongooseModel.db
+        .collection(localStateStore.getCollName())
+        .findOneAndDelete({
+          modelName: options.modelName,
+          timestamp: mergedOptions.options.timestamp,
+        });
+
+      // new options requests deletion of old options
+      // but those options have been updated by another process
+      if (!update || !update.ok) {
+        throwPluginError(
+          'Error at initialisation, cannot delete old options, Still in use!',
+          options.modelName,
+        );
+      }
+    }
+
+    if (update && update.ok) {
+      assignId.appendState({
+        readyState: 1,
+        model: mongooseModel,
+      });
+      return 1;
+    } else {
+      throwPluginError(`Initialisation error ${update}`, options.modelName);
+      return 3;
+    }
+  } catch (e) {
+    if (e.code === 11000) {
+      if (retries > 30) {
+        throwPluginError(
+          'Initialisation error, maximum retries attained',
+          options.modelName,
+        );
+      }
+      return refreshDBOptions(mongooseModel, assignId, ++retries);
+    }
+    return Promise.reject(e);
+  }
 }
 
 async function dbInitialiseLogic(
@@ -49,47 +148,15 @@ async function dbInitialiseLogic(
   const options = assignId.options;
 
   try {
-    const oldOptions = await mongooseModel.db
+    // create index, ensures no duplicates during upserts
+    await mongooseModel.db
       .collection(localStateStore.getCollName())
-      .findOne({ modelName: options.modelName });
+      .createIndex('modelName', {
+        unique: true,
+        background: false,
+      });
 
-    const mergedOptions = checkAndUpdateOptions(options, oldOptions);
-
-    if (mergedOptions.changes) {
-      const update = await mongooseModel.db
-        .collection(localStateStore.getCollName())
-        .findOneAndReplace(
-          { modelName: options.modelName },
-          mergedOptions.options,
-          {
-            upsert: true,
-          },
-        );
-
-      if (update.ok) {
-        assignId.appendState({
-          modelName: options.modelName,
-          readyState: 1,
-          model: mongooseModel,
-        });
-        return 1;
-      } else {
-        assignId.appendState({
-          modelName: options.modelName,
-          error: new Error(`AssignId Initialise Error!', ${options.modelName}`),
-          readyState: 3,
-        });
-        return 3;
-      }
-    }
-
-    assignId.appendState({
-      modelName: options.modelName,
-      readyState: 1,
-      model: mongooseModel,
-    });
-
-    return 1;
+    return await refreshDBOptions(mongooseModel, assignId);
   } catch (e) {
     assignId.appendState({
       modelName: options.modelName,
@@ -103,6 +170,7 @@ async function dbInitialiseLogic(
 export async function initialiseOptions(
   mongooseModel: Model<Document>,
   assignId: MongooseIdAssigner,
+  retries = 0,
 ): Promise<number> {
   const options = assignId.options;
 
@@ -125,6 +193,23 @@ export async function initialiseOptions(
   } else if (mongooseModel.db.readyState === 1) {
     return await dbInitialiseLogic(mongooseModel, assignId);
   }
-  return 0;
-  // disconnecting, disconnected
+
+  if (retries < 10) {
+    try {
+      // 3 - disconnecting, wait more
+      // 0 - disconnected, wait less as connection can be back anytime.
+      await waitPromise(
+        (mongooseModel.db.readyState === 3 ? 500 : 100) * retries,
+      );
+
+      return initialiseOptions(mongooseModel, assignId, ++retries);
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  } else {
+    throwPluginError(
+      'Initialisation failed, cannot establish db connection not established!',
+    );
+    return 0;
+  }
 }

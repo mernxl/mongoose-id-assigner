@@ -1,6 +1,6 @@
 import { NumberFieldConfig } from '../../assigner.interfaces';
 import { MongooseIdAssigner } from '../../MongooseIdAssigner';
-import { waitPromise } from '../index';
+import { throwPluginError, waitPromise } from '../index';
 
 export async function getNextIdNumber(
   field: string,
@@ -31,7 +31,10 @@ export async function getNextIdNumber(
         modelName: idAssigner.modelName,
         [updateField]: nextId,
       },
-      { $set: { [updateField]: afterNextId } },
+      {
+        $set: { [updateField]: afterNextId },
+        $currentDate: { timestamp: true },
+      },
       { projection: { value: 1 } },
     );
 
@@ -40,6 +43,12 @@ export async function getNextIdNumber(
       await waitPromise(idAssigner.retryMillis * multiplier);
       await idAssigner.refreshOptions();
       return getNextIdNumber(field, idAssigner, fieldConfig, ++retries);
+    } else if (!update.value && retries > idAssigner.retryTime) {
+      throwPluginError(
+        `Maximum retryTime to set value attained!`,
+        idAssigner.modelName,
+        field,
+      );
     }
   } catch (e) {
     return Promise.reject(e);

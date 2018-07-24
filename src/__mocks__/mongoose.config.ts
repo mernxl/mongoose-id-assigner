@@ -40,12 +40,18 @@ export function getMongoose() {
     return mongoose;
   } else {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
-    mongoose.connect(
-      'mongodb://localhost:27017/test_ia',
-      {
+    /*const originalConnect = mongoose.connect;
+
+    (mongoose as any).connect = () => {
+      originalConnect.bind(mongoose)('mongodb://localhost:27017/test_ia', {
         useNewUrlParser: true,
-      },
+      });
+    };*/
+    mongoose.connect(
+      'mongodb://localhost:27017/demoDB',
+      { useNewUrlParser: true },
     );
+
     return mongoose;
   }
 }

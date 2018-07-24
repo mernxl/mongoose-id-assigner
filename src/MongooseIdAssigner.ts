@@ -4,18 +4,14 @@ import { Collection } from 'mongodb';
 import { Document, Model, Schema } from 'mongoose';
 import { AssignerOptions, FieldConfig } from './assigner.interfaces';
 import { localStateStore, SchemaState } from './LocalStateStore';
-import {
-  initialiseOptions,
-  normaliseOptions,
-  throwPluginError,
-  waitPromise,
-} from './utils';
+import { initialiseOptions, normaliseOptions, throwPluginError } from './utils';
 import { refreshOptions } from './utils/assign-fields-ids';
 import { configureSchema } from './utils/configure-schema';
 
 export interface NormalisedOptions {
   modelName: string;
   network: boolean;
+  timestamp?: number | null;
   fields?: Map<string, FieldConfig>;
 }
 
@@ -53,7 +49,6 @@ export class MongooseIdAssigner extends EventEmitter {
     this.options = normaliseOptions(options);
     this.modelName = this.options.modelName;
     this._saveState();
-    this._modelNameIndex();
     configureSchema(this);
   }
 
@@ -108,22 +103,6 @@ export class MongooseIdAssigner extends EventEmitter {
       modelName: this.modelName,
       readyState: 0,
       idAssigner: this,
-    });
-  }
-
-  private _modelNameIndex() {
-    this.on('ready', async () => {
-      if (!this.options.fields) {
-        return;
-      }
-
-      try {
-        await waitPromise(1); // nextTick
-
-        await this.collection.createIndex('modelName');
-      } catch (e) {
-        throw e;
-      }
     });
   }
 }
