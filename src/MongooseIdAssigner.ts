@@ -19,6 +19,13 @@ export interface NormalisedOptions {
   fields?: Map<string, FieldConfig>;
 }
 
+/**
+ * The numbers also depict what you receive upon from readyState
+ * @event 1. ready - If the init process is complete
+ * @event 2. init - Initialising the idAssigner
+ * @event 0. unready - Init process not started
+ * @event -1. error - Init process error out
+ */
 export class MongooseIdAssigner extends EventEmitter {
   public readonly schema: Schema;
 
@@ -34,7 +41,10 @@ export class MongooseIdAssigner extends EventEmitter {
     }
 
     if (localStateStore.getState(schema)) {
-      throwPluginError('Provided schema already have an Assigner Instance!');
+      throwPluginError(
+        'Provided schema already have an Assigner Instance!',
+        options.modelName,
+      );
     }
 
     this.schema = schema;
@@ -46,8 +56,8 @@ export class MongooseIdAssigner extends EventEmitter {
     configureSchema(this);
   }
 
-  get isReady() {
-    return this.state.isReady;
+  get readyState() {
+    return this.state.readyState;
   }
 
   get state(): SchemaState {
@@ -55,7 +65,7 @@ export class MongooseIdAssigner extends EventEmitter {
     if (!state) {
       localStateStore.setState(this.schema, {
         modelName: this.modelName,
-        isReady: 0,
+        readyState: 0,
         idAssigner: this,
       });
     } else {
@@ -91,13 +101,13 @@ export class MongooseIdAssigner extends EventEmitter {
   }
 
   initialise(modelInstance: Model<Document>): Promise<number> {
-    if (this.state.isReady === 0) {
-      this.appendState({ isReady: 2 });
+    if (this.state.readyState === 0) {
+      this.appendState({ readyState: 2 });
 
       return initialiseOptions(modelInstance, this);
     }
 
-    return this.state.isReady === 1
+    return this.state.readyState === 1
       ? Promise.resolve(1)
       : eventToPromise(this, 'ready').then(() => 1);
   }

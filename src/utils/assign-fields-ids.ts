@@ -20,7 +20,7 @@ export async function refreshOptions(
       modelName: assigner.modelName,
     });
 
-    if (!freshOptions && assigner.isReady) {
+    if (!freshOptions && assigner.readyState) {
       throwPluginError(
         'Stored Options not Found for Ready Model!',
         assigner.modelName,

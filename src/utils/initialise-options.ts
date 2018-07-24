@@ -69,7 +69,7 @@ async function dbInitialiseLogic(
       if (update.ok) {
         assignId.appendState({
           modelName: options.modelName,
-          isReady: 1,
+          readyState: 1,
           model: mongooseModel,
         });
         return 1;
@@ -77,15 +77,15 @@ async function dbInitialiseLogic(
         assignId.appendState({
           modelName: options.modelName,
           error: new Error(`AssignId Initialise Error!', ${options.modelName}`),
-          isReady: 0,
+          readyState: 3,
         });
-        return 0;
+        return 3;
       }
     }
 
     assignId.appendState({
       modelName: options.modelName,
-      isReady: 1,
+      readyState: 1,
       model: mongooseModel,
     });
 
@@ -94,9 +94,9 @@ async function dbInitialiseLogic(
     assignId.appendState({
       modelName: options.modelName,
       error: e,
-      isReady: 0,
+      readyState: 3,
     });
-    return 0;
+    return 3;
   }
 }
 
@@ -110,7 +110,7 @@ export async function initialiseOptions(
     assignId.appendState({
       modelName: options.modelName,
       model: mongooseModel,
-      isReady: 1,
+      readyState: 1,
     });
     return 1;
   }

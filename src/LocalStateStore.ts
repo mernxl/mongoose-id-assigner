@@ -3,7 +3,7 @@ import { MongooseIdAssigner } from './MongooseIdAssigner';
 
 export interface SchemaState {
   modelName: string;
-  isReady: number; // 0 - notReady, 1 ready, 2 initialising
+  readyState: number;
   model?: Model<Document>;
   error?: Error;
   idAssigner: MongooseIdAssigner;
@@ -35,15 +35,18 @@ export class LocalStateStore {
       state.idAssigner.emit('unready');
     } else {
       this.stateMap.set(schema, state);
-      if (state.isReady !== preState.isReady) {
-        if (state.isReady === 2) {
+      if (state.readyState !== preState.readyState) {
+        if (state.readyState === 2) {
           state.idAssigner.emit('init');
         }
-        if (state.isReady === 1) {
+        if (state.readyState === 1) {
           state.idAssigner.emit('ready');
         }
-        if (state.isReady === 0) {
+        if (state.readyState === 0) {
           state.idAssigner.emit('unready');
+        }
+        if (state.readyState === -1) {
+          state.idAssigner.emit('error');
         }
       }
     }

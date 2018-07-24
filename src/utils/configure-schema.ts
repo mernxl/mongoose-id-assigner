@@ -50,7 +50,7 @@ function configurePreSave(assigner: MongooseIdAssigner) {
           );
         }
 
-        if (!assigner.isReady) {
+        if (assigner.readyState !== 1) {
           await assigner.initialise(this.model(assigner.modelName));
         }
 
