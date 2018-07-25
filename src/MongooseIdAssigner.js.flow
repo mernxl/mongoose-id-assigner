@@ -1,0 +1,39 @@
+/* @flow */
+
+import EventEmitter from 'events';
+import type { MongooseSchema, MongooseModel } from 'mongoose';
+import { AssignerOptions, type FieldConfig } from './assigner.interfaces';
+import { SchemaState } from './LocalStateStore';
+
+export interface NormalisedOptions {
+  modelName: string;
+  network: boolean;
+  timestamp?: number | null;
+  fields?: Map<string, FieldConfig>;
+}
+
+/**
+ * The numbers also depict what you receive upon from readyState
+ * @event 1. ready - If the init process is complete
+ * @event 2. init - Initialising the idAssigner
+ * @event 0. unready - Init process not started
+ * @event -1. error - Init process error out
+ */
+declare export class MongooseIdAssigner extends EventEmitter {
+  schema: MongooseSchema<any>;
+  retryMillis: number;
+  retryTime: number;
+  modelName: string;
+  options: NormalisedOptions;
+  readyState: number;
+  constructor(schema: MongooseSchema<any>, options: AssignerOptions): this;
+  state: SchemaState;
+  collection: any;
+  static plugin(
+    schema: MongooseSchema<any>,
+    options: AssignerOptions,
+  ): MongooseIdAssigner;
+  refreshOptions(): Promise<void>;
+  appendState(state: $Shape<SchemaState>): void;
+  initialise(modelInstance: MongooseModel): Promise<number>;
+}

@@ -3,33 +3,35 @@
   "version": "1.0.0-alpha.0",
   "description": "A Mongoose Plugin. Easily Manage fields that need an id(unique value) on your mongoose model. This plugin does the work of generating, incrementing, and assigning those values(unique) to those fields.",
   "main": "lib/index.js",
-  "repository": "https://github.com/mernxl/mongoose-assign-id.git",
+  "types": "lib/index.d.ts",
+  "repository": "https://github.com/mernxl/mongoose-id-assigner.git",
   "author": "mernxl <mernxl@gmail.com>",
   "license": "MIT",
   "files": [
     "lib"
   ],
   "keywords": [
-    "mongodb",
     "mongoose",
     "uuid",
     "objectid",
     "auto-increment",
     "incrementer",
-    "bson",
-    "document",
     "unique-id",
     "auto-generate"
   ],
   "scripts": {
-    "build": "yarn run clean && yarn run tsc -d",
+    "build": "yarn run clean && yarn run tsc -d && yarn run build-flow",
+    "build-flow": "find ./src -name '*.js.flow' -not -path '*/__*' | while read filepath; do cp $filepath `echo ./${COPY_TO_FOLDER:-lib}$filepath | sed 's/.\\/src\\//\\//g'`; done",
     "tsc": "tsc",
+    "flow": "./node_modules/.bin/flow",
     "lint": "tslint -p ./",
     "jest:watch": "jest --watch",
     "coverage": "jest --coverage --maxWorkers 2",
-    "test": "yarn run prettier && yarn run coverage && yarn run lint && yarn run tsc",
+    "test": "yarn run prettier && yarn run coverage && yarn run lint && yarn run tsc && yarn run flow",
     "clean": "rimraf lib",
-    "prettier": "prettier --write --config .prettierrc \"src/**/*.ts\""
+    "prettier": "yarn run prettier-ts && yarn run prettier-flow",
+    "prettier-ts": "prettier --write --config .prettierrc \"src/**/*.ts\"",
+    "prettier-flow": "prettier --write --parser babylon \"src/**/*.js.flow\""
   },
   "dependencies": {
     "event-to-promise": "^0.8.0",
@@ -60,6 +62,7 @@
     "@types/mongoose": "^5.2.1",
     "@types/uuid": "^3.4.3",
     "babel-core": "^6.26.3",
+    "flow-bin": "^0.77.0",
     "jest": "^23.4.1",
     "mongodb-memory-server": "^1.9.0",
     "prettier": "^1.13.7",

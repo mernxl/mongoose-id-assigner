@@ -48,7 +48,12 @@ export class MongooseIdAssigner extends EventEmitter {
     this.retryMillis = 20; // after 20 millis
     this.options = normaliseOptions(options);
     this.modelName = this.options.modelName;
-    this._saveState();
+
+    this.appendState({
+      modelName: this.modelName,
+      readyState: 0,
+      idAssigner: this,
+    });
     configureSchema(this);
   }
 
@@ -78,7 +83,7 @@ export class MongooseIdAssigner extends EventEmitter {
     return new MongooseIdAssigner(schema, options);
   }
 
-  refreshOptions() {
+  refreshOptions(): Promise<void> {
     return refreshOptions(this);
   }
 
@@ -96,13 +101,5 @@ export class MongooseIdAssigner extends EventEmitter {
     return this.state.readyState === 1
       ? Promise.resolve(1)
       : eventToPromise(this, 'ready').then(() => 1);
-  }
-
-  private _saveState() {
-    localStateStore.setState(this.schema, {
-      modelName: this.modelName,
-      readyState: 0,
-      idAssigner: this,
-    });
   }
 }

@@ -1,0 +1,38 @@
+/* @flow */
+
+import type { MongooseModel, MongooseSchema } from 'mongoose';
+import { MongooseIdAssigner } from './MongooseIdAssigner';
+
+export interface SchemaState {
+  modelName: string;
+  readyState: number;
+  model?: MongooseModel;
+  error?: Error;
+  idAssigner: MongooseIdAssigner;
+}
+
+declare export class LocalStateStore {
+  static _instance: LocalStateStore;
+  collName: string;
+  stateMap: Map<MongooseSchema<any>, SchemaState>;
+  constructor(): this;
+  getState(schema: MongooseSchema<any>): SchemaState;
+  setState(schema: MongooseSchema<any>, state: SchemaState): void;
+  clear(): void;
+
+  /**
+   * Get the Collection name for all idAssigners
+   * @return {string}
+   */
+  getCollName(): string;
+
+  /**
+   * Can only be called on at app bootstrap, that is before any IA initialises
+   * Well the functionality comes as setting a different collName will make ids
+   * inconsistent for mongoose connection instances
+   * @param {string} collName
+   */
+  setCollName(collName: string): void;
+}
+
+declare export var localStateStore: LocalStateStore;

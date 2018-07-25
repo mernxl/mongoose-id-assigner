@@ -1,6 +1,9 @@
-# Mongoose-Id-Assigner (IA)
+# Mongoose Id Assigner (IA)
+[![npm](https://img.shields.io/npm/v/mongoose-id-assigner.svg)](https://www.npmjs.com/package/mongoose-id-assigner)
 [![Build Status](https://travis-ci.org/mernxl/mongoose-id-assigner.svg?branch=master)](https://travis-ci.org/mernxl/mongoose-id-assigner)
 [![codecov](https://codecov.io/gh/mernxl/mongoose-id-assigner/branch/master/graph/badge.svg)](https://codecov.io/gh/mernxl/mongoose-id-assigner)
+![TypeScript compatible](https://img.shields.io/badge/typescript-compatible-brightgreen.svg)
+![FlowType compatible](https://img.shields.io/badge/flowtype-compatible-brightgreen.svg)
 
 A [Mongoose](http://mongoosejs.com) Plugin. Easily Manage fields that need an id(unique value) on your mongoose model. This plugin does the work of generating, incrementing, and assigning those values(unique) to those fields.
 
