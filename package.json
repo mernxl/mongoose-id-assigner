@@ -6,6 +6,9 @@
   "repository": "https://github.com/mernxl/mongoose-assign-id.git",
   "author": "mernxl <mernxl@gmail.com>",
   "license": "MIT",
+  "files": [
+    "lib"
+  ],
   "keywords": [
     "mongodb",
     "mongoose",
