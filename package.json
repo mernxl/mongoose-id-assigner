@@ -36,8 +36,10 @@
   },
   "dependencies": {
     "event-to-promise": "^0.8.0",
-    "mongoose": "^5.2.4",
     "uuid": "^3.3.2"
+  },
+  "peerDependencies": {
+    "mongoose": ">=4.0.0 || >=5.0.0"
   },
   "jest": {
     "roots": [
@@ -66,6 +68,7 @@
     "flow-bin": "^0.77.0",
     "jest": "^23.4.1",
     "mongodb-memory-server": "^1.9.0",
+    "mongoose": "^5.2.5",
     "prettier": "^1.13.7",
     "rimraf": "^2.6.2",
     "semantic-release": "^15.8.1",
