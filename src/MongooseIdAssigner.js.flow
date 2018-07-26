@@ -3,7 +3,7 @@
 import EventEmitter from 'events';
 import type { MongooseSchema, MongooseModel } from 'mongoose';
 import type { AssignerOptions, FieldConfig } from './assigner.interfaces';
-import { SchemaState } from './LocalStateStore';
+import type { SchemaState } from './LocalStateStore';
 
 export interface NormalisedOptions {
   modelName: string;
