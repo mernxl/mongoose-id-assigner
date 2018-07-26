@@ -12,7 +12,7 @@ node_js:
   - "8"
 env:
   global:
-    TEST_SITE=travis-ci
+  - TEST_SITE=travis-ci
 stages:
   - name: release
       if: branch = master
