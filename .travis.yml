@@ -10,8 +10,24 @@ notifications:
 node_js:
   - "9"
   - "8"
+env:
+  global:
+    TEST_SITE=travis-ci
+stages:
+  - name: release
+      if: branch = master
 script:
   - yarn run test
-  - yarn run build
+job:
+  include:
+    - stage: release
+      name: release
+      script:
+      - yarn run build
+      deploy:
+        provider: script
+        skip_cleanup: true
+        script:
+          - npx semantic-release
 after_success:
   - bash <(curl -s https://codecov.io/bash)

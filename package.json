@@ -1,6 +1,6 @@
 {
   "name": "mongoose-id-assigner",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "description": "A Mongoose Plugin. Easily Manage fields that need an id(unique value) on your mongoose model. This plugin does the work of generating, incrementing, and assigning those values(unique) to those fields.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -31,7 +31,8 @@
     "clean": "rimraf lib",
     "prettier": "yarn run prettier-ts && yarn run prettier-flow",
     "prettier-ts": "prettier --write --config .prettierrc \"src/**/*.ts\"",
-    "prettier-flow": "prettier --write --parser babylon \"src/**/*.js.flow\""
+    "prettier-flow": "prettier --write --parser babylon \"src/**/*.js.flow\"",
+    "semantic-release": "semantic-release"
   },
   "dependencies": {
     "event-to-promise": "^0.8.0",
@@ -67,6 +68,7 @@
     "mongodb-memory-server": "^1.9.0",
     "prettier": "^1.13.7",
     "rimraf": "^2.6.2",
+    "semantic-release": "^15.8.1",
     "ts-jest": "^23.0.1",
     "tslint": "^5.11.0",
     "typescript": "^2.9.2"
