@@ -32,9 +32,8 @@ function configurePreSave(assigner: MongooseIdAssigner) {
 
     try {
       if (doc.isNew || doc.e11000) {
-        // if no fields, then assign _id
-
-        if (!options.fields) {
+        // if no fields, no discriminators
+        if (!options.fields && !options.discriminators) {
           doc._id = new ObjectId();
           return next();
         }
@@ -45,7 +44,7 @@ function configurePreSave(assigner: MongooseIdAssigner) {
               `Cannot assign field ids, Error on Init. [${
                 assigner.state.error
               }]`,
-              options.modelName,
+              assigner.modelName,
             ),
           );
         }

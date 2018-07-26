@@ -60,10 +60,18 @@ export interface AssignerFieldsConfigMap {
 }
 
 /**
+ * A map of discriminatorName(modelName) and its own AssignerFieldsConfigMap
+ */
+export interface DiscriminatorConfigMap {
+  [discriminatorName: string]: AssignerFieldsConfigMap;
+}
+
+/**
  * If Options does not contain fields(AssignerFieldsConfigMap),
  * Then setup assigner for _id field, does not use network
  */
 export interface AssignerOptions {
   modelName: string;
   fields?: AssignerFieldsConfigMap;
+  discriminators?: DiscriminatorConfigMap;
 }

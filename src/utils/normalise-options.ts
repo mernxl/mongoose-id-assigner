@@ -1,4 +1,6 @@
+import { Schema } from 'mongoose';
 import {
+  AssignerFieldsConfigMap,
   AssignerOptions,
   FieldConfig,
   FieldConfigTypes,
@@ -82,9 +84,96 @@ function checkFieldConfig(
   return true;
 }
 
-export function normaliseOptions(
-  options: AssignerOptions,
+function normaliseFieldsConfigMap(
+  modelName: string,
+  fieldsConfigMap?: AssignerFieldsConfigMap,
   discriminator = false,
+): {
+  network: boolean;
+  fields: Map<string, FieldConfig> | undefined;
+} {
+  if (!fieldsConfigMap) {
+    return { network: false, fields: undefined };
+  }
+
+  const rObject = {
+    network: false,
+    fields: new Map<string, FieldConfig>(),
+  };
+
+  const fields: Map<string, FieldConfig> = rObject.fields;
+
+  // do not auto add to child, inherited
+  if (!fieldsConfigMap['_id'] && !discriminator) {
+    fieldsConfigMap['_id'] = { type: 'ObjectId' };
+  }
+
+  for (const field in fieldsConfigMap) {
+    if (!fieldsConfigMap.hasOwnProperty(field)) {
+      continue;
+    }
+
+    let fieldConfig = fieldsConfigMap[field];
+
+    if (typeof fieldConfig === 'boolean') {
+      fieldConfig = { type: FieldConfigTypes.ObjectId };
+    }
+
+    if (typeof fieldConfig === 'number') {
+      rObject.network = true;
+      fieldConfig = { type: FieldConfigTypes.Number, nextId: fieldConfig };
+    }
+
+    if (typeof fieldConfig === 'string') {
+      if (FieldConfigTypes[fieldConfig as any]) {
+        switch (fieldConfig) {
+          case FieldConfigTypes.ObjectId:
+            fieldConfig = { type: FieldConfigTypes.ObjectId };
+            break;
+          case FieldConfigTypes.UUID:
+          case FieldConfigTypes.GUID:
+            fieldConfig = { type: FieldConfigTypes.UUID, version: 1 };
+            break;
+
+          default:
+            // Number and String
+            throwPluginError(
+              `nextId not provided for field type ${fieldConfig}!`,
+              modelName,
+              field,
+            );
+        }
+      } else {
+        rObject.network = true;
+        fieldConfig = { type: FieldConfigTypes.String, nextId: fieldConfig };
+      }
+    }
+
+    if (
+      // if not converted to Object already
+      typeof fieldConfig === 'string' ||
+      (fieldConfig && typeof fieldConfig !== 'object') ||
+      !FieldConfigTypes[fieldConfig.type]
+    ) {
+      throwPluginError(`Unknown Field Type for field [${field}]`, modelName);
+    }
+
+    if (fieldConfig && typeof fieldConfig === 'object') {
+      const network = checkFieldConfig(modelName, field, fieldConfig);
+      if (network) {
+        rObject.network = true;
+      }
+
+      fields.set(field, fieldConfig);
+    }
+  }
+
+  return rObject;
+}
+
+export function normaliseOptions(
+  schema: Schema,
+  options: AssignerOptions,
 ): NormalisedOptions {
   if (!options) {
     throw throwPluginError('Plugin Options not specified!');
@@ -94,80 +183,42 @@ export function normaliseOptions(
     throw throwPluginError('Plugin `modelName` must be defined!');
   }
 
-  if (!options.fields) {
-    return { modelName: options.modelName, network: false };
-  }
-
   const normalised: NormalisedOptions = {
     modelName: options.modelName,
-    network: false,
+    ...normaliseFieldsConfigMap(options.modelName, options.fields),
   };
 
-  const fields: Map<string, FieldConfig> = new Map();
-
-  if (!options.fields['_id']) {
-    options.fields['_id'] = { type: 'ObjectId' };
-  }
-
-  for (const field in options.fields) {
-    if (!options.fields.hasOwnProperty(field)) {
-      continue;
-    }
-
-    let fieldConfig = options.fields[field];
-
-    if (typeof fieldConfig === 'boolean') {
-      fieldConfig = { type: FieldConfigTypes.ObjectId };
-    }
-
-    if (typeof fieldConfig === 'number') {
-      normalised.network = true;
-      fieldConfig = { type: FieldConfigTypes.Number, nextId: fieldConfig };
-    }
-
-    if (typeof fieldConfig === 'string') {
-      if (
-        fieldConfig === FieldConfigTypes.UUID ||
-        fieldConfig === FieldConfigTypes.GUID
-      ) {
-        fieldConfig = { type: FieldConfigTypes.UUID, version: 1 };
-      } else if (fieldConfig === FieldConfigTypes.ObjectId) {
-        fieldConfig = { type: FieldConfigTypes.ObjectId };
-      } else {
-        normalised.network = true;
-        fieldConfig = { type: FieldConfigTypes.String, nextId: fieldConfig };
+  // cannot rely on discriminatorKey as its default __t
+  if (schema.get('discriminatorKey') && options.discriminators) {
+    const discriminatorMap: Map<string, Map<string, FieldConfig>> = new Map();
+    for (const dName in options.discriminators) {
+      if (!options.discriminators.hasOwnProperty(dName)) {
+        continue;
       }
-    }
 
-    if (
-      // if not converted to Object already
-      (fieldConfig && typeof fieldConfig !== 'object') ||
-      !FieldConfigTypes[fieldConfig.type]
-    ) {
-      throwPluginError(
-        `Unknown Field Type for field [${field}]`,
-        options.modelName,
+      const discriminator: AssignerFieldsConfigMap =
+        options.discriminators[dName];
+      const rObjectDNormalisedFields = normaliseFieldsConfigMap(
+        dName,
+        discriminator,
+        true,
       );
-    }
 
-    if (fieldConfig && typeof fieldConfig === 'object') {
-      const network = checkFieldConfig(options.modelName, field, fieldConfig);
-      if (network) {
+      if (!rObjectDNormalisedFields.fields) {
+        continue;
+      }
+
+      if (rObjectDNormalisedFields.network) {
         normalised.network = true;
       }
+
+      discriminatorMap.set(dName, rObjectDNormalisedFields.fields);
     }
 
-    fields.set(field, fieldConfig);
+    if (discriminatorMap.size > 0) {
+      normalised.discriminators = discriminatorMap;
+    }
   }
 
-  normalised.fields = fields;
-
-  /*if (isDiscriminator(options)) {
-   for (const discriminator in options.discriminators) {
-   if (options.discriminators.hasOwnProperty(discriminator)) {
-   const dis = options.discriminators[ discriminator ];
-   }
-   }
-   }*/
   return normalised;
 }
