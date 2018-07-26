@@ -1,6 +1,6 @@
 /* @flow */
 
-declare var FieldConfigTypes: {
+declare export var FieldConfigTypes: {
   UUID: 'UUID',
   GUID: 'GUID',
   String: 'String',
@@ -8,25 +8,25 @@ declare var FieldConfigTypes: {
   ObjectId: 'ObjectId',
 };
 
-export interface DefaultFieldConfig {
+export type DefaultFieldConfig = {
   type: 'ObjectId';
 }
 
-export interface StringFieldConfig {
+export type StringFieldConfig = {
   type: 'String';
   nextId: string;
   separator?: string;
   nextIdFunction?: (nextId: string) => string;
 }
 
-export interface NumberFieldConfig {
+export type NumberFieldConfig = {
   type: 'Number';
   nextId: number;
   incrementBy?: number;
   nextIdFunction?: (nextId: number, incrementBy?: number) => number;
 }
 
-export interface UUIDFieldConfig {
+export type UUIDFieldConfig = {
   type: 'UUID' | 'GUID';
   asBinary?: boolean; // default string
   version?: number; // supports 1 and 4, default 1
@@ -52,7 +52,7 @@ export type FieldConfig = {
  * fieldConfig = boolean(true), then fieldType = ObjectId
  * fieldConfig = GUID | UUID, then use UUID v4
  */
-export interface AssignerFieldsConfigMap {
+export type AssignerFieldsConfigMap = {
   [fieldName: string]:
     | FieldConfig
     | string
@@ -65,7 +65,7 @@ export interface AssignerFieldsConfigMap {
 /**
  * A map of discriminatorName(modelName) and its own AssignerFieldsConfigMap
  */
-export interface DiscriminatorConfigMap {
+export type DiscriminatorConfigMap = {
   [discriminatorName: string]: AssignerFieldsConfigMap;
 }
 
@@ -73,7 +73,7 @@ export interface DiscriminatorConfigMap {
  * If Options does not contain fields(AssignerFieldsConfigMap),
  * Then setup assigner for _id field, does not use network
  */
-export interface AssignerOptions {
+export type AssignerOptions = {
   modelName: string;
   fields?: AssignerFieldsConfigMap;
   discriminators?: DiscriminatorConfigMap;

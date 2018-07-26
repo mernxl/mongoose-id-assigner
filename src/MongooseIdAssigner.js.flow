@@ -2,7 +2,7 @@
 
 import EventEmitter from 'events';
 import type { MongooseSchema, MongooseModel } from 'mongoose';
-import { AssignerOptions, type FieldConfig } from './assigner.interfaces';
+import type { AssignerOptions, FieldConfig } from './assigner.interfaces';
 import { SchemaState } from './LocalStateStore';
 
 export interface NormalisedOptions {
@@ -10,6 +10,7 @@ export interface NormalisedOptions {
   network: boolean;
   timestamp?: number | null;
   fields?: Map<string, FieldConfig>;
+  discriminators?: Map<string, Map<string, FieldConfig>>;
 }
 
 /**
@@ -21,9 +22,10 @@ export interface NormalisedOptions {
  */
 declare export class MongooseIdAssigner extends EventEmitter {
   schema: MongooseSchema<any>;
-  retryMillis: number;
-  retryTime: number;
   modelName: string;
+  discriminatorKey: string;
+  retryTime: string;
+  retryMillis: number;
   options: NormalisedOptions;
   readyState: number;
   constructor(schema: MongooseSchema<any>, options: AssignerOptions): this;

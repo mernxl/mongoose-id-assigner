@@ -3,7 +3,7 @@
 import type { MongooseModel, MongooseSchema } from 'mongoose';
 import { MongooseIdAssigner } from './MongooseIdAssigner';
 
-export interface SchemaState {
+export type SchemaState = {
   modelName: string;
   readyState: number;
   model?: MongooseModel;
