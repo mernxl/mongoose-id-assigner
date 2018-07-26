@@ -87,7 +87,6 @@ function checkFieldConfig(
 function normaliseFieldsConfigMap(
   modelName: string,
   fieldsConfigMap?: AssignerFieldsConfigMap,
-  discriminator = false,
 ): {
   network: boolean;
   fields: Map<string, FieldConfig> | undefined;
@@ -102,11 +101,6 @@ function normaliseFieldsConfigMap(
   };
 
   const fields: Map<string, FieldConfig> = rObject.fields;
-
-  // do not auto add to child, inherited
-  if (!fieldsConfigMap['_id'] && !discriminator) {
-    fieldsConfigMap['_id'] = { type: 'ObjectId' };
-  }
 
   for (const field in fieldsConfigMap) {
     if (!fieldsConfigMap.hasOwnProperty(field)) {
@@ -188,6 +182,15 @@ export function normaliseOptions(
     ...normaliseFieldsConfigMap(options.modelName, options.fields),
   };
 
+  normalised.fields = normalised.fields
+    ? normalised.fields
+    : new Map<string, FieldConfig>();
+
+  // set default _id field
+  if (!normalised.fields.has('_id')) {
+    normalised.fields.set('_id', { type: 'ObjectId' });
+  }
+
   // cannot rely on discriminatorKey as its default __t
   if (schema.get('discriminatorKey') && options.discriminators) {
     const discriminatorMap: Map<string, Map<string, FieldConfig>> = new Map();
@@ -201,7 +204,6 @@ export function normaliseOptions(
       const rObjectDNormalisedFields = normaliseFieldsConfigMap(
         dName,
         discriminator,
-        true,
       );
 
       if (!rObjectDNormalisedFields.fields) {

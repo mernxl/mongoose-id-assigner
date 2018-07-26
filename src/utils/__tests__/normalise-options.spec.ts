@@ -116,13 +116,32 @@ describe('normaliseOptions()', () => {
     });
 
     it('should be optimised at sting catchall', () => {
-      const option: AssignerOptions = {
-        modelName: 'Test',
-        fields: {
-          _id: FieldConfigTypes.Number, // throws exception, no nextId
-          string: FieldConfigTypes.String, // throws error, no nextId, no match string-incrementer regex
+      const pluginOptions: AssignerOptions = {
+        modelName: 'Character',
+        discriminators: {
+          ['Person']: {
+            _id: '12T1542',
+          },
         },
       };
+
+      const pluginExpected: NormalisedOptions = {
+        modelName: 'Character',
+        network: true,
+        fields: new Map<string, FieldConfig>([
+          ['_id', { type: FieldConfigTypes.ObjectId }],
+        ]),
+        discriminators: new Map<string, Map<string, FieldConfig>>([
+          [
+            'Person',
+            new Map<string, FieldConfig>([
+              ['_id', { type: FieldConfigTypes.String, nextId: '12T1542' }],
+            ]),
+          ],
+        ]),
+      };
+
+      expect(normaliseOptions(schema, pluginOptions)).toEqual(pluginExpected);
     });
   });
 
