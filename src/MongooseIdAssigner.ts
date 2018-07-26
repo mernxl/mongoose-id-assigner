@@ -8,11 +8,15 @@ import { initialiseOptions, normaliseOptions, throwPluginError } from './utils';
 import { refreshOptions } from './utils/assign-fields-ids';
 import { configureSchema } from './utils/configure-schema';
 
+/**
+ * Options stored in db, plus modelName
+ */
 export interface NormalisedOptions {
   modelName: string;
   network: boolean;
   timestamp?: number | null;
   fields?: Map<string, FieldConfig>;
+  discriminators?: Map<string, Map<string, FieldConfig>>;
 }
 
 /**
@@ -24,10 +28,11 @@ export interface NormalisedOptions {
  */
 export class MongooseIdAssigner extends EventEmitter {
   public readonly schema: Schema;
+  public readonly modelName: string;
+  public readonly discriminatorKey: string;
 
   public readonly retryMillis: number;
   public readonly retryTime: number;
-  public readonly modelName: string;
   public readonly options: NormalisedOptions;
 
   constructor(schema: Schema, options: AssignerOptions) {
@@ -44,11 +49,14 @@ export class MongooseIdAssigner extends EventEmitter {
     }
 
     this.schema = schema;
+    this.modelName = options.modelName;
+    this.discriminatorKey = schema.get('discriminatorKey');
+
     this.retryTime = 20;
     this.retryMillis = 20; // after 20 millis
-    this.options = normaliseOptions(options);
-    this.modelName = this.options.modelName;
+    this.options = normaliseOptions(schema, options);
 
+    this.options.modelName = this.modelName;
     this.appendState({
       modelName: this.modelName,
       readyState: 0,

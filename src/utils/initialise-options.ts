@@ -1,5 +1,6 @@
 import * as eventToPromise from 'event-to-promise';
 import { Document, Model } from 'mongoose';
+import { FieldConfig } from '../assigner.interfaces';
 import { localStateStore } from '../LocalStateStore';
 import { MongooseIdAssigner, NormalisedOptions } from '../MongooseIdAssigner';
 import { throwPluginError, waitPromise } from './others';
@@ -12,14 +13,54 @@ interface OptionsCheckResults {
   options: NormalisedOptions;
 }
 
+function checkAndUpdateFieldConfigMap(
+  fieldConfigMap?: Map<string, FieldConfig>,
+  freshFieldConfigObj?: any,
+): boolean {
+  let replace = false;
+
+  if (!fieldConfigMap) {
+    return true;
+  }
+
+  for (const [field, config] of fieldConfigMap.entries()) {
+    const oldConfig = freshFieldConfigObj[field];
+
+    if (!oldConfig) {
+      replace = true;
+    }
+
+    if (isNumber(config) && isNumber(oldConfig)) {
+      if (oldConfig && config.nextId !== oldConfig.nextId) {
+        replace = true;
+        config.nextId = oldConfig.nextId;
+      }
+    }
+
+    if (isString(config) && isString(oldConfig)) {
+      if (oldConfig && config.nextId !== oldConfig.nextId) {
+        replace = true;
+        config.nextId = oldConfig.nextId;
+      }
+    }
+
+    // fixme sort this issue out
+    // throw error, or if dev tag, if reset true... then override
+    if (config.type !== oldConfig.type) {
+    }
+  }
+
+  return replace;
+}
+
 // checks if fieldConfigs changed, update field nextIds only
 // checks if AssignerOptions contains no field configs, replace = false
 export function checkAndUpdateOptions(
   options: NormalisedOptions,
   freshOptions?: NormalisedOptions,
 ): OptionsCheckResults {
-  if (!freshOptions || !freshOptions.fields) {
-    if (!options || !options.fields) {
+  if (!freshOptions || (!freshOptions.fields && !freshOptions.discriminators)) {
+    if (!options.fields && !options.discriminators) {
       return { abort: true, options };
     } else {
       options.timestamp = null;
@@ -31,29 +72,27 @@ export function checkAndUpdateOptions(
   options.timestamp = freshOptions.timestamp;
 
   // delete old options if new doesn't need it
-  if (!options || !options.fields) {
+  if (!options || (!options.fields && !options.discriminators)) {
     return { delete: true, options };
   }
 
   const rObject = { replace: false, options };
-  for (const [field, config] of options.fields.entries()) {
-    const oldConfig = (freshOptions as any).fields[field];
 
-    if (!oldConfig) {
-      rObject.replace = true;
-    }
+  rObject.replace = checkAndUpdateFieldConfigMap(
+    options.fields,
+    freshOptions.fields,
+  );
 
-    if (isNumber(config) && isNumber(oldConfig)) {
-      if (oldConfig && config.nextId !== oldConfig.nextId) {
+  // if discriminator options available
+  if (options.discriminators) {
+    for (const [dName, fieldConfigMap] of options.discriminators.entries()) {
+      const replace = checkAndUpdateFieldConfigMap(
+        fieldConfigMap,
+        freshOptions ? (freshOptions as any).discriminators[dName] : undefined,
+      );
+
+      if (replace) {
         rObject.replace = true;
-        config.nextId = oldConfig.nextId;
-      }
-    }
-
-    if (isString(config) && isString(oldConfig)) {
-      if (oldConfig && config.nextId !== oldConfig.nextId) {
-        rObject.replace = true;
-        config.nextId = oldConfig.nextId;
       }
     }
   }
@@ -63,20 +102,20 @@ export function checkAndUpdateOptions(
 
 async function refreshDBOptions(
   mongooseModel: Model<Document>,
-  assignId: MongooseIdAssigner,
+  idAssigner: MongooseIdAssigner,
   retries = 0,
 ): Promise<number> {
-  const options = assignId.options;
+  const options = idAssigner.options;
   try {
     const freshOptions = await mongooseModel.db
       .collection(localStateStore.getCollName())
-      .findOne({ modelName: options.modelName });
+      .findOne({ modelName: idAssigner.modelName });
 
     const mergedOptions = checkAndUpdateOptions(options, freshOptions);
 
     if (mergedOptions.abort) {
-      assignId.appendState({
-        modelName: options.modelName,
+      idAssigner.appendState({
+        modelName: idAssigner.modelName,
         readyState: 1,
         model: mongooseModel,
       });
@@ -91,7 +130,7 @@ async function refreshDBOptions(
         .collection(localStateStore.getCollName())
         .findOneAndReplace(
           {
-            modelName: options.modelName,
+            modelName: idAssigner.modelName,
             timestamp: mergedOptions.options.timestamp,
           },
           mergedOptions.options,
@@ -103,7 +142,7 @@ async function refreshDBOptions(
       update = await mongooseModel.db
         .collection(localStateStore.getCollName())
         .findOneAndDelete({
-          modelName: options.modelName,
+          modelName: idAssigner.modelName,
           timestamp: mergedOptions.options.timestamp,
         });
 
@@ -112,19 +151,19 @@ async function refreshDBOptions(
       if (!update || !update.ok) {
         throwPluginError(
           'Error at initialisation, cannot delete old options, Still in use!',
-          options.modelName,
+          idAssigner.modelName,
         );
       }
     }
 
     if (update && update.ok) {
-      assignId.appendState({
+      idAssigner.appendState({
         readyState: 1,
         model: mongooseModel,
       });
       return 1;
     } else {
-      throwPluginError(`Initialisation error ${update}`, options.modelName);
+      throwPluginError(`Initialisation error ${update}`, idAssigner.modelName);
       return 3;
     }
   } catch (e) {
@@ -132,10 +171,10 @@ async function refreshDBOptions(
       if (retries > 30) {
         throwPluginError(
           'Initialisation error, maximum retries attained',
-          options.modelName,
+          idAssigner.modelName,
         );
       }
-      return refreshDBOptions(mongooseModel, assignId, ++retries);
+      return refreshDBOptions(mongooseModel, idAssigner, ++retries);
     }
     return Promise.reject(e);
   }
@@ -143,10 +182,8 @@ async function refreshDBOptions(
 
 async function dbInitialiseLogic(
   mongooseModel: Model<Document>,
-  assignId: MongooseIdAssigner,
+  idAssigner: MongooseIdAssigner,
 ): Promise<number> {
-  const options = assignId.options;
-
   try {
     // create index, ensures no duplicates during upserts
     await mongooseModel.db
@@ -156,10 +193,10 @@ async function dbInitialiseLogic(
         background: false,
       });
 
-    return await refreshDBOptions(mongooseModel, assignId);
+    return await refreshDBOptions(mongooseModel, idAssigner);
   } catch (e) {
-    assignId.appendState({
-      modelName: options.modelName,
+    idAssigner.appendState({
+      modelName: idAssigner.modelName,
       error: e,
       readyState: 3,
     });
@@ -169,14 +206,14 @@ async function dbInitialiseLogic(
 
 export async function initialiseOptions(
   mongooseModel: Model<Document>,
-  assignId: MongooseIdAssigner,
+  idAssigner: MongooseIdAssigner,
   retries = 0,
 ): Promise<number> {
-  const options = assignId.options;
+  const options = idAssigner.options;
 
   if (!options.network) {
-    assignId.appendState({
-      modelName: options.modelName,
+    idAssigner.appendState({
+      modelName: idAssigner.modelName,
       model: mongooseModel,
       readyState: 1,
     });
@@ -186,12 +223,12 @@ export async function initialiseOptions(
   // connecting
   if (mongooseModel.db.readyState === 2) {
     return await eventToPromise(mongooseModel.db, 'connected').then(() =>
-      dbInitialiseLogic(mongooseModel, assignId),
+      dbInitialiseLogic(mongooseModel, idAssigner),
     );
 
     // connected
   } else if (mongooseModel.db.readyState === 1) {
-    return await dbInitialiseLogic(mongooseModel, assignId);
+    return await dbInitialiseLogic(mongooseModel, idAssigner);
   }
 
   if (retries < 10) {
@@ -202,7 +239,7 @@ export async function initialiseOptions(
         (mongooseModel.db.readyState === 3 ? 500 : 100) * retries,
       );
 
-      return initialiseOptions(mongooseModel, assignId, ++retries);
+      return initialiseOptions(mongooseModel, idAssigner, ++retries);
     } catch (e) {
       return Promise.reject(e);
     }

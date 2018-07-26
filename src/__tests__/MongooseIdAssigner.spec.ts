@@ -26,7 +26,7 @@ describe('MongooseIdAssigner', () => {
   describe('basics', () => {
     it('should save state to localStateStore', () => {
       const plugin = MongooseIdAssigner.plugin(exampleSchema, {
-        modelName: 'ex',
+        modelName: 'example',
       });
 
       expect(localStateStore.getState(exampleSchema)).toBeDefined();
@@ -73,9 +73,30 @@ describe('MongooseIdAssigner', () => {
       expect(doc._id).toBeTruthy();
     });
 
+    it('should create noNetwork with UUID and ObjectId', async () => {
+      const plugin = MongooseIdAssigner.plugin(exampleSchema, {
+        modelName: 'example4',
+        fields: {
+          _id: FieldConfigTypes.UUID,
+          objectIdField: FieldConfigTypes.ObjectId,
+        },
+      });
+
+      exampleModel = mongoose.model('example4', exampleSchema);
+
+      try {
+        const doc = await exampleModel.create({ personId: 'mernxl' });
+
+        expect(plugin.options.network).toBe(false);
+        expect((doc as any).objectIdField).toBeInstanceOf(Types.ObjectId);
+      } catch (e) {
+        expect(e).toBeUndefined();
+      }
+    });
+
     it('should assign _ids to Model instances with options', async () => {
       MongooseIdAssigner.plugin(exampleSchema, {
-        modelName: 'example4',
+        modelName: 'example5',
         fields: {
           _id: {
             type: FieldConfigTypes.String,
@@ -85,7 +106,7 @@ describe('MongooseIdAssigner', () => {
         },
       });
 
-      exampleModel = mongoose.model('example4', exampleSchema);
+      exampleModel = mongoose.model('example5', exampleSchema);
 
       try {
         const doc = await exampleModel.create({ personId: 'mernxl' });
@@ -98,7 +119,7 @@ describe('MongooseIdAssigner', () => {
 
     it('should assign multiple ids to fields', async () => {
       const options: AssignerOptions = {
-        modelName: 'example5',
+        modelName: 'example6',
         fields: {
           _id: '33333',
           photoId: 44444,
@@ -113,34 +134,38 @@ describe('MongooseIdAssigner', () => {
       };
 
       exampleSchema.plugin(MongooseIdAssigner.plugin, options);
-      exampleModel = mongoose.model('example5', exampleSchema);
+      exampleModel = mongoose.model('example6', exampleSchema);
 
-      const doc = await exampleModel.create({ personId: 'mernxl' });
-      const doc2 = await exampleModel.create({ personId: 'mernxl' });
+      try {
+        const doc = await exampleModel.create({ personId: 'mernxl' });
+        const doc2 = await exampleModel.create({ personId: 'mernxl' });
 
-      expect([doc._id, doc2._id]).toEqual(
-        expect.arrayContaining(['33333', '33334']),
-      );
-      expect((doc as any).photoId).not.toBe((doc2 as any).photoId);
-      expect([(doc as any).photoId, (doc2 as any).photoId]).toEqual(
-        expect.arrayContaining([44444, 44445]),
-      );
-      expect((doc as any).emailId).not.toBe((doc2 as any).emailId);
-      expect([(doc as any).emailId, (doc2 as any).emailId]).toEqual(
-        expect.arrayContaining(['55555', '55556']),
-      );
-      expect((doc as any).personId).not.toBe((doc2 as any).personId);
-      expect([(doc as any).personId, (doc2 as any).personId]).toEqual(
-        expect.arrayContaining(['66666', '66667']),
-      );
-      expect((doc as any).uuidField).not.toBe((doc2 as any).uuidField);
-      expect((doc as any).uuidField).toBeInstanceOf(Binary);
-      expect((doc2 as any).uuidField).toBeInstanceOf(Binary);
+        expect([doc._id, doc2._id]).toEqual(
+          expect.arrayContaining(['33333', '33334']),
+        );
+        expect((doc as any).photoId).not.toBe((doc2 as any).photoId);
+        expect([(doc as any).photoId, (doc2 as any).photoId]).toEqual(
+          expect.arrayContaining([44444, 44445]),
+        );
+        expect((doc as any).emailId).not.toBe((doc2 as any).emailId);
+        expect([(doc as any).emailId, (doc2 as any).emailId]).toEqual(
+          expect.arrayContaining(['55555', '55556']),
+        );
+        expect((doc as any).personId).not.toBe((doc2 as any).personId);
+        expect([(doc as any).personId, (doc2 as any).personId]).toEqual(
+          expect.arrayContaining(['66666', '66667']),
+        );
+        expect((doc as any).uuidField).not.toBe((doc2 as any).uuidField);
+        expect((doc as any).uuidField).toBeInstanceOf(Binary);
+        expect((doc2 as any).uuidField).toBeInstanceOf(Binary);
+      } catch (e) {
+        expect(e).toBeUndefined();
+      }
     });
 
     it('should use nextIdFunction passed at fieldConfig', async () => {
       const options: AssignerOptions = {
-        modelName: 'example6',
+        modelName: 'example7',
         fields: {
           _id: '33333',
           photoId: {
@@ -160,7 +185,7 @@ describe('MongooseIdAssigner', () => {
       try {
         MongooseIdAssigner.plugin(exampleSchema, options);
 
-        exampleModel = mongoose.model('example6', exampleSchema);
+        exampleModel = mongoose.model('example7', exampleSchema);
 
         const doc1 = await exampleModel.create({ personId: 'placeholder' });
         const doc2 = await exampleModel.create({ personId: 'placeholder' });
@@ -176,7 +201,7 @@ describe('MongooseIdAssigner', () => {
 
     it('should be robust enough to avoid duplicates', async () => {
       const options: AssignerOptions = {
-        modelName: 'example7',
+        modelName: 'example8',
         fields: {
           _id: '33333',
           photoId: 44444,
@@ -199,7 +224,7 @@ describe('MongooseIdAssigner', () => {
       try {
         const plugin = MongooseIdAssigner.plugin(exampleSchema, options);
 
-        exampleModel = mongoose.model('example7', exampleSchema);
+        exampleModel = mongoose.model('example8', exampleSchema);
 
         // initialise to ensure that
         // model is set and db is connected
@@ -250,27 +275,6 @@ describe('MongooseIdAssigner', () => {
   describe('initialise()', () => {
     it('should initialise the plugin', () => {
       const plugin = MongooseIdAssigner.plugin(exampleSchema, {
-        modelName: 'example8',
-        fields: {
-          _id: {
-            type: FieldConfigTypes.String,
-            separator: 'T',
-            nextId: '34T5565',
-          },
-        },
-      });
-
-      exampleModel = mongoose.model('example8', exampleSchema);
-
-      return plugin
-        .initialise(exampleModel)
-        .then(state => expect(state).toBe(1))
-        .catch(e => expect(e).toBeUndefined());
-    });
-
-    it('should return state if called multiple times', () => {
-      expect.assertions(2);
-      const plugin = MongooseIdAssigner.plugin(exampleSchema, {
         modelName: 'example9',
         fields: {
           _id: {
@@ -283,6 +287,27 @@ describe('MongooseIdAssigner', () => {
 
       exampleModel = mongoose.model('example9', exampleSchema);
 
+      return plugin
+        .initialise(exampleModel)
+        .then(state => expect(state).toBe(1))
+        .catch(e => expect(e).toBeUndefined());
+    });
+
+    it('should return state if called multiple times', () => {
+      expect.assertions(2);
+      const plugin = MongooseIdAssigner.plugin(exampleSchema, {
+        modelName: 'example10',
+        fields: {
+          _id: {
+            type: FieldConfigTypes.String,
+            separator: 'T',
+            nextId: '34T5565',
+          },
+        },
+      });
+
+      exampleModel = mongoose.model('example10', exampleSchema);
+
       plugin
         .initialise(exampleModel)
         .then(state => expect(state).toBe(1))
@@ -292,6 +317,108 @@ describe('MongooseIdAssigner', () => {
         .initialise(exampleModel)
         .then(state => expect(state).toBe(1))
         .catch(e => expect(e).toBeUndefined());
+    });
+  });
+
+  describe('discriminators', () => {
+    let characterSchema: Schema, personSchema: Schema, droidSchema: Schema;
+    beforeEach(() => {
+      characterSchema = getSchema(1);
+      personSchema = getSchema(2);
+      droidSchema = getSchema(3);
+    });
+
+    it('should create noNetwork discriminators', async () => {
+      const options: AssignerOptions = {
+        modelName: 'example11',
+        fields: {
+          _id: FieldConfigTypes.GUID,
+        },
+        discriminators: {
+          Person1: {
+            license: FieldConfigTypes.ObjectId,
+          },
+          Droid1: {
+            make: FieldConfigTypes.UUID,
+          },
+        },
+      };
+
+      const plugin = MongooseIdAssigner.plugin(characterSchema, options);
+
+      const characterModel = mongoose.model('example11', characterSchema);
+      const personModel = characterModel.discriminator('Person1', personSchema);
+      const droidModel = characterModel.discriminator('Droid1', droidSchema);
+      try {
+        const character = await characterModel.create({
+          friends: 'placeholder',
+        });
+        const person = await personModel.create({ friends: 'placeholder' });
+        const droid = await droidModel.create({ friends: 'placeholder' });
+
+        expect(plugin.options.network).toBe(false);
+        expect((character as any)._id).toMatch(/-+/);
+        expect(typeof (person as any).license).toBe('string');
+        expect((droid as any).make).toMatch(/-+/);
+      } catch (e) {
+        expect(e).toBeUndefined();
+      }
+    });
+
+    it('should create discriminators network', async () => {
+      const options: AssignerOptions = {
+        modelName: 'example12',
+        fields: {
+          someId: 4444,
+        },
+        discriminators: {
+          Person: {
+            _id: FieldConfigTypes.ObjectId,
+            license: '786-TSJ-000', // default separator `-`
+          },
+          Droid: {
+            _id: FieldConfigTypes.UUID,
+            make: {
+              type: FieldConfigTypes.String,
+              nextId: '18Y4433',
+              separator: 'Y',
+            },
+            timestamp: Date.now(),
+          },
+        },
+      };
+
+      MongooseIdAssigner.plugin(characterSchema, options);
+
+      const characterModel = mongoose.model('example12', characterSchema);
+      const personModel = characterModel.discriminator('Person', personSchema);
+      const droidModel = characterModel.discriminator('Droid', droidSchema);
+
+      try {
+        const character = await characterModel.create({
+          friends: 'placeholder',
+        });
+        const person = await personModel.create({ friends: 'placeholder' });
+        const droid = await droidModel.create({ friends: 'placeholder' });
+        const person1 = await personModel.create({ friends: 'placeholder' });
+        const droid1 = await droidModel.create({ friends: 'placeholder' });
+
+        expect((character as any).someId).toBe(4444);
+        expect(typeof (person as any)._id).toBe('string');
+        expect((person as any).someId).toBe(4445);
+        expect((person as any).license).toBe('786-TSJ-000');
+        expect((droid as any)._id).toMatch(/-+/);
+        expect((droid as any).someId).toBe(4446);
+        expect((droid as any).make).toBe('18Y4433');
+
+        expect((person1 as any).someId).toBe(4447);
+        expect((person1 as any).license).toBe('786-TSJ-001');
+
+        expect((droid1 as any).someId).toBe(4448);
+        expect((droid1 as any).make).toBe('18Y4434');
+      } catch (e) {
+        expect(e).toBeUndefined();
+      }
     });
   });
 });

@@ -7,12 +7,6 @@ import {
   UUIDFieldConfig,
 } from '../assigner.interfaces';
 
-/*export function isDiscriminator(
- options: IAssignIdPluginOptions | IAssignIdPluginDOptions,
- ): options is IAssignIdPluginDOptions {
- return !!(options as IAssignIdPluginDOptions).discriminatorKey;
- }*/
-
 export function isObjectId(
   config: FieldConfig | string | number | boolean | 'GUID' | 'UUID',
 ): config is DefaultFieldConfig {

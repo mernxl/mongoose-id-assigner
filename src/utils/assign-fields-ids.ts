@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { Document } from 'mongoose';
+import { FieldConfig } from '../assigner.interfaces';
 import { MongooseIdAssigner, NormalisedOptions } from '../MongooseIdAssigner';
 import {
   getNextIdNumber,
@@ -42,32 +43,89 @@ export async function assignIdNetwork(
   idAssigner: MongooseIdAssigner,
   doc: Document,
 ) {
-  if (!idAssigner.options.fields) {
+  let dFields: Map<string, FieldConfig> | undefined;
+
+  if (idAssigner.options.discriminators) {
+    if ((doc as any)[idAssigner.discriminatorKey]) {
+      dFields = idAssigner.options.discriminators.get(
+        (doc as any)[idAssigner.discriminatorKey],
+      );
+    }
+  }
+
+  if (!idAssigner.options.fields && !dFields) {
     return;
   }
 
   try {
     const fields = idAssigner.options.fields;
-    for (const [field, config] of fields) {
-      if (isObjectId(config)) {
-        (doc as any)[field] = new ObjectId();
-        continue;
+
+    await idAssigner.refreshOptions();
+    if (fields) {
+      for (const [field, config] of fields.entries()) {
+        if (dFields && dFields.get(field)) {
+          continue;
+        }
+
+        if (isObjectId(config)) {
+          (doc as any)[field] = new ObjectId();
+          continue;
+        }
+
+        if (isUUID(config)) {
+          (doc as any)[field] = getNextIdUUID(config);
+          continue;
+        }
+
+        if (isNumber(config)) {
+          (doc as any)[field] = await getNextIdNumber(
+            field,
+            idAssigner,
+            config,
+          );
+          continue;
+        }
+
+        if (isString(config)) {
+          (doc as any)[field] = await getNextIdString(
+            field,
+            idAssigner,
+            config,
+          );
+        }
       }
+    }
 
-      if (isUUID(config)) {
-        (doc as any)[field] = getNextIdUUID(config);
-        continue;
-      }
+    if (dFields) {
+      for (const [field, config] of dFields.entries()) {
+        if (isObjectId(config)) {
+          (doc as any)[field] = new ObjectId();
+          continue;
+        }
 
-      await idAssigner.refreshOptions();
+        if (isUUID(config)) {
+          (doc as any)[field] = getNextIdUUID(config);
+          continue;
+        }
 
-      if (isNumber(config)) {
-        (doc as any)[field] = await getNextIdNumber(field, idAssigner, config);
-        continue;
-      }
+        if (isNumber(config)) {
+          (doc as any)[field] = await getNextIdNumber(
+            field,
+            idAssigner,
+            config,
+            (doc as any)[idAssigner.discriminatorKey],
+          );
+          continue;
+        }
 
-      if (isString(config)) {
-        (doc as any)[field] = await getNextIdString(field, idAssigner, config);
+        if (isString(config)) {
+          (doc as any)[field] = await getNextIdString(
+            field,
+            idAssigner,
+            config,
+            (doc as any)[idAssigner.discriminatorKey],
+          );
+        }
       }
     }
   } catch (e) {
@@ -79,20 +137,49 @@ export function assignIdNoNetwork(
   idAssigner: MongooseIdAssigner,
   doc: Document,
 ) {
+  let dFields: Map<string, FieldConfig> | undefined;
+
+  if (idAssigner.options.discriminators) {
+    if ((doc as any)[idAssigner.discriminatorKey]) {
+      dFields = idAssigner.options.discriminators.get(
+        (doc as any)[idAssigner.discriminatorKey],
+      );
+    }
+  }
+
   const fields = idAssigner.options.fields;
 
-  if (!fields) {
+  if (!fields && !dFields) {
     return;
   }
 
-  for (const [field, config] of fields.entries()) {
-    if (isObjectId(config)) {
-      (doc as any)[field] = new ObjectId();
-      continue;
-    }
+  if (fields) {
+    for (const [field, config] of fields.entries()) {
+      if (dFields && dFields.get(field)) {
+        continue;
+      }
 
-    if (isUUID(config)) {
-      (doc as any)[field] = getNextIdUUID(config);
+      if (isObjectId(config)) {
+        (doc as any)[field] = new ObjectId();
+        continue;
+      }
+
+      if (isUUID(config)) {
+        (doc as any)[field] = getNextIdUUID(config);
+      }
+    }
+  }
+
+  if (dFields) {
+    for (const [field, config] of dFields.entries()) {
+      if (isObjectId(config)) {
+        (doc as any)[field] = new ObjectId();
+        continue;
+      }
+
+      if (isUUID(config)) {
+        (doc as any)[field] = getNextIdUUID(config);
+      }
     }
   }
 }

@@ -7,6 +7,7 @@ export async function getNextIdString(
   field: string,
   idAssigner: MongooseIdAssigner,
   fieldConfig: StringFieldConfig,
+  discriminatorName = '',
   retries = 1,
   getOnly = false,
 ): Promise<string> {
@@ -25,7 +26,9 @@ export async function getNextIdString(
   }
 
   try {
-    const updateField = `fields.${field}.nextId`;
+    const updateField = discriminatorName
+      ? `discriminators.${discriminatorName}.${field}.nextId`
+      : `fields.${field}.nextId`;
     const update = await idAssigner.collection.findOneAndUpdate(
       {
         modelName: idAssigner.modelName,
@@ -42,7 +45,13 @@ export async function getNextIdString(
       const multiplier = Math.abs(Math.random() * retries);
       await waitPromise(idAssigner.retryMillis * multiplier);
       await idAssigner.refreshOptions();
-      return getNextIdString(field, idAssigner, fieldConfig, ++retries);
+      return getNextIdString(
+        field,
+        idAssigner,
+        fieldConfig,
+        discriminatorName,
+        ++retries,
+      );
     } else if (!update.value && retries > idAssigner.retryTime) {
       throwPluginError(
         `Maximum retryTime to set value attained!`,
