@@ -26,8 +26,13 @@ npm install mongoose-id-assigner
 TypeName: **AssignerOptions**
 - `modelName`: **String** Name for the Model your are working with.
 - `fields`: **AssignerFieldsConfigMap?** The configuration Map of the fields you want the assigner to assign ids to.
-  If Null, then plugin assigns ids to `_id` field, (ObjectId).
+  If undefined, then plugin assigns ids to `_id` field, (ObjectId).
   - [fieldName: string]: FieldConfig | string | number | boolean | 'GUID' | 'UUID'
+
+### Point to Note
+At every Network Assigner init(i.e Assigner with Number, String FieldConfigTypes), the Assigner(for a Model) refreshes and syncs with the db stored options. Take example micro-service cluster, 
+the last app to init always gives most recent field configs, if the db have a field that is not in the most recent field config, it is auto dropped.
+Therefore always make sure all your micro-service clusters start up with same fieldsConfigs as the last to start rewrites the db and only keeps nextIds.
 
 ## Examples
 Lets create our Mongoose Schema.

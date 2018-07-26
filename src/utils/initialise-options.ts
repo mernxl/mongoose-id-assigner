@@ -17,11 +17,11 @@ function checkAndUpdateFieldConfigMap(
   fieldConfigMap?: Map<string, FieldConfig>,
   freshFieldConfigObj?: any,
 ): boolean {
-  let replace = false;
-
-  if (!fieldConfigMap) {
+  if (!freshFieldConfigObj || !fieldConfigMap) {
     return true;
   }
+
+  let replace = true;
 
   for (const [field, config] of fieldConfigMap.entries()) {
     const oldConfig = freshFieldConfigObj[field];
@@ -46,7 +46,9 @@ function checkAndUpdateFieldConfigMap(
 
     // fixme sort this issue out
     // throw error, or if dev tag, if reset true... then override
+    // updated info on README.md until better fix, override
     if (config.type !== oldConfig.type) {
+      replace = true;
     }
   }
 
@@ -76,7 +78,7 @@ export function checkAndUpdateOptions(
     return { delete: true, options };
   }
 
-  const rObject = { replace: false, options };
+  const rObject = { replace: true, options };
 
   rObject.replace = checkAndUpdateFieldConfigMap(
     options.fields,
