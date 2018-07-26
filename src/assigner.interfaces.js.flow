@@ -9,29 +9,29 @@ declare export var FieldConfigTypes: {
 };
 
 export type DefaultFieldConfig = {
-  type: 'ObjectId';
-}
+  type: 'ObjectId',
+};
 
 export type StringFieldConfig = {
-  type: 'String';
-  nextId: string;
-  separator?: string;
-  nextIdFunction?: (nextId: string) => string;
-}
+  type: 'String',
+  nextId: string,
+  separator?: string,
+  nextIdFunction?: (nextId: string) => string,
+};
 
 export type NumberFieldConfig = {
-  type: 'Number';
-  nextId: number;
-  incrementBy?: number;
-  nextIdFunction?: (nextId: number, incrementBy?: number) => number;
-}
+  type: 'Number',
+  nextId: number,
+  incrementBy?: number,
+  nextIdFunction?: (nextId: number, incrementBy?: number) => number,
+};
 
 export type UUIDFieldConfig = {
-  type: 'UUID' | 'GUID';
-  asBinary?: boolean; // default string
-  version?: number; // supports 1 and 4, default 1
-  versionOptions?: any;
-}
+  type: 'UUID' | 'GUID',
+  asBinary?: boolean, // default string
+  version?: number, // supports 1 and 4, default 1
+  versionOptions?: any,
+};
 
 // noSpace, insure we consume all possible values, i.e. we must have 1, 2, 3, 4
 // order doesn't matter but all those keys must be present, no 1, 3, 4, 6
@@ -59,22 +59,22 @@ export type AssignerFieldsConfigMap = {
     | number
     | boolean
     | 'GUID'
-    | 'UUID';
-}
+    | 'UUID',
+};
 
 /**
  * A map of discriminatorName(modelName) and its own AssignerFieldsConfigMap
  */
 export type DiscriminatorConfigMap = {
-  [discriminatorName: string]: AssignerFieldsConfigMap;
-}
+  [discriminatorName: string]: AssignerFieldsConfigMap,
+};
 
 /**
  * If Options does not contain fields(AssignerFieldsConfigMap),
  * Then setup assigner for _id field, does not use network
  */
 export type AssignerOptions = {
-  modelName: string;
-  fields?: AssignerFieldsConfigMap;
-  discriminators?: DiscriminatorConfigMap;
-}
+  modelName: string,
+  fields?: AssignerFieldsConfigMap,
+  discriminators?: DiscriminatorConfigMap,
+};

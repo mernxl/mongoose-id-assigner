@@ -4,12 +4,12 @@ import type { MongooseModel, MongooseSchema } from 'mongoose';
 import { MongooseIdAssigner } from './MongooseIdAssigner';
 
 export type SchemaState = {
-  modelName: string;
-  readyState: number;
-  model?: MongooseModel;
-  error?: Error;
-  idAssigner: MongooseIdAssigner;
-}
+  modelName: string,
+  readyState: number,
+  model?: MongooseModel,
+  error?: Error,
+  idAssigner: MongooseIdAssigner,
+};
 
 declare export class LocalStateStore {
   static _instance: LocalStateStore;
