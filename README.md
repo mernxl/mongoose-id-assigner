@@ -191,7 +191,7 @@ interface DefaultFieldConfig {
 interface StringFieldConfig {
   type: 'String';
   nextId: string;  // the id that will be assigned next
-  separator?: string;
+  separator?: string;   // default `-` e.g. 434-344
   nextIdFunction?: (nextId: string) => string;  // custom function to generate nextIds
 }
 
