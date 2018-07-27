@@ -8,11 +8,12 @@ import {
   getNextIdUUID,
 } from './get-next-ids';
 import { checkAndUpdateOptions } from './initialise-options';
-import { throwPluginError } from './others';
+import { throwPluginError, waitPromise } from './others';
 import { isNumber, isObjectId, isString, isUUID } from './type-guards';
 
 export async function refreshOptions(
   assigner: MongooseIdAssigner,
+  retries = 0,
 ): Promise<void> {
   const collection = assigner.collection;
 
@@ -22,6 +23,10 @@ export async function refreshOptions(
     });
 
     if (!freshOptions && assigner.options.network && assigner.readyState) {
+      if (retries < 10) {
+        await waitPromise(10 * retries); // wait and retry
+        return refreshOptions(assigner, ++retries);
+      }
       throwPluginError(
         'Stored Options not Found for Ready Model!',
         assigner.modelName,
