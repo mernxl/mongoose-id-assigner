@@ -12,7 +12,21 @@ This plugin assigns values base on your configurations, be it `MongoDB's ObjectI
 
 It creates a collection with name `id_assigner` that store the `nextId` for a configured field. This only happens if you have fields configured with type `String` or `Number`. As `ObjectId` and `UUID` can be generated locally unique, they do not use this collection for assigning values.
 
-This is the perfect tool if you wish to work with `discriminators` and have `_id` field(and/or other fields) values different amongst the discriminators instances. See examples below for demonstration.  
+This is the perfect tool if you wish to work with `discriminators` and have `_id` field(and/or other fields) values different amongst the discriminators instances. See examples below for demonstration.
+
+-----
+
+# Table of Content
+- [Installation](#installation)
+- [Basic Usage](#basic-usage)
+  - [Plugin Options](#plugin-options)
+  - [Point to Note](#point-to-note)
+- [Examples](#examples)
+  - [Configuration Methods](#configuration-methods)
+- [Working with Discriminators](#working-with-discriminators)
+- [TypeDefinitions](#typedefinitions)
+- [Strain Test](#strain-test,-performs-the-task-below-on-a-locally-hosted-db-instance.)
+- [License](#license)
 
 ## Installation
 ```
@@ -82,6 +96,8 @@ console.log(doc.uuidFieldString)   --->   '7729e2e0-8f8b-11e8-882d-2dade78bb893'
 ```
 
 **Method 2**: Request Assigner Instance, If you have initialisation logic, you need to initialise the plugin.
+Calling initialise is really optional, except you want to query nextIds, or your collection is really a very busy one.
+You may just call it and ignore the promise.
 ```js
 const options = {
   modelName: 'ExampleModel',
