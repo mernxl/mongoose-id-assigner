@@ -229,6 +229,7 @@ describe('MongooseIdAssigner', () => {
         // initialise to ensure that
         // model is set and db is connected
         // before performing heavy tasks
+        // or you can set max event listeners to 100 to suppress waits
         const state = await plugin.initialise(exampleModel);
 
         expect(state).toBe(1);
