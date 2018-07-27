@@ -24,10 +24,13 @@ npm install mongoose-id-assigner
 ## Basic Usage
 ### Plugin Options
 TypeName: **AssignerOptions**
-- `modelName`: **String** Name for the Model your are working with.
+- `modelName`: **String** Name of the Model your are working with. If discriminators, then provide baseModel Name.
 - `fields`: **AssignerFieldsConfigMap?** The configuration Map of the fields you want the assigner to assign ids to.
   If undefined, then plugin assigns ids to `_id` field, (ObjectId).
   - [fieldName: string]: FieldConfig | string | number | boolean | 'GUID' | 'UUID'
+- `discriminators`: **[discriminatorName: string]: AssignerFieldsConfigMap?** An Object with Keys `discriminatorName` 
+  and value a Configuration Map for fields on that discriminator that need unique values. Any discriminator without a 
+  fieldConfig will use that of the baseModel. 
 
 ### Point to Note
 At every Network Assigner init(i.e Assigner with Number, String FieldConfigTypes), the Assigner(for a Model) refreshes and syncs with the db stored options. Take example micro-service cluster, 
