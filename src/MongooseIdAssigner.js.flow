@@ -1,5 +1,6 @@
 /* @flow */
 
+import type { ObjectId } from 'mongoose';
 import EventEmitter from 'events';
 import type { MongooseSchema, MongooseModel } from 'mongoose';
 import type { AssignerOptions, FieldConfig } from './assigner.interfaces';
@@ -36,6 +37,22 @@ declare export class MongooseIdAssigner extends EventEmitter {
     options: AssignerOptions,
   ): MongooseIdAssigner;
   refreshOptions(): Promise<void>;
+  getFieldConfig(
+    field: string,
+    discriminator?: string,
+  ): FieldConfig | typeof undefined;
+  getNextId(
+    field: string,
+    discriminator?: string,
+  ): Promise<
+    | void
+    | ObjectId
+    | Buffer
+    | string
+    | number
+    | Promise<number>
+    | Promise<string>,
+  >;
   appendState(state: $Shape<SchemaState>): void;
   initialise(modelInstance: MongooseModel): Promise<number>;
 }

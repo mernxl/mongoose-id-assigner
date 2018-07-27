@@ -21,7 +21,9 @@ describe('MongooseIdAssigner', () => {
 
   let exampleModel: Model<Document>;
 
-  afterEach(async () => mongoose.connection.dropDatabase());
+  afterEach(async () => {
+    await mongoose.connection.dropDatabase();
+  });
 
   describe('basics', () => {
     it('should save state to localStateStore', () => {
@@ -416,6 +418,49 @@ describe('MongooseIdAssigner', () => {
 
         expect((droid1 as any).someId).toBe(4448);
         expect((droid1 as any).make).toBe('18Y4434');
+      } catch (e) {
+        expect(e).toBeUndefined();
+      }
+    });
+  });
+
+  describe('getNextId()', () => {
+    it('should throw error message if field not found', async () => {
+      const characterSchema = getSchema(1);
+
+      const options: AssignerOptions = {
+        modelName: 'example13',
+        discriminators: {
+          Person13: {
+            license: 4444,
+          },
+        },
+      };
+
+      const characterIA = MongooseIdAssigner.plugin(characterSchema, options);
+
+      try {
+        await characterIA.getNextId('not-found', 'Person13');
+      } catch (e) {
+        expect(e.message).toMatch(
+          /(\[not-found] does not have a Field Configuration)/,
+        );
+      }
+    });
+    it('should return nextId depending on fieldConfig', async () => {
+      const options: AssignerOptions = {
+        modelName: 'example14',
+        fields: {
+          photoId: 4444,
+        },
+      };
+
+      const exampleIA = MongooseIdAssigner.plugin(exampleSchema, options);
+      const model = mongoose.model('example14', exampleSchema);
+
+      try {
+        await model.create({ photoId: 21 });
+        expect(await exampleIA.getNextId('photoId')).toBe(4445);
       } catch (e) {
         expect(e).toBeUndefined();
       }

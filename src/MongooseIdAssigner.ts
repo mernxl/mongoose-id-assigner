@@ -1,12 +1,22 @@
 import * as eventToPromise from 'event-to-promise';
 import { EventEmitter } from 'events';
-import { Collection } from 'mongodb';
+import { Binary, Collection, ObjectId } from 'mongodb';
 import { Document, Model, Schema } from 'mongoose';
-import { AssignerOptions, FieldConfig } from './assigner.interfaces';
+import {
+  AssignerOptions,
+  FieldConfig,
+  FieldConfigTypes,
+  NumberFieldConfig,
+} from './assigner.interfaces';
 import { localStateStore, SchemaState } from './LocalStateStore';
 import { initialiseOptions, normaliseOptions, throwPluginError } from './utils';
 import { refreshOptions } from './utils/assign-fields-ids';
 import { configureSchema } from './utils/configure-schema';
+import {
+  getNextIdNumber,
+  getNextIdString,
+  getNextIdUUID,
+} from './utils/get-next-ids';
 
 /**
  * Options stored in db, plus modelName
@@ -93,6 +103,74 @@ export class MongooseIdAssigner extends EventEmitter {
 
   refreshOptions(): Promise<void> {
     return refreshOptions(this);
+  }
+
+  getFieldConfig(
+    field: string,
+    discriminator?: string,
+  ): FieldConfig | undefined {
+    if (discriminator && this.options.discriminators) {
+      for (const [key, value] of this.options.discriminators.entries()) {
+        if (key === discriminator) {
+          for (const [k, v] of value.entries()) {
+            if (k === field) {
+              return v;
+            }
+          }
+        }
+      }
+    }
+    if (this.options.fields) {
+      for (const [k, v] of this.options.fields.entries()) {
+        if (k === field) {
+          return v;
+        }
+      }
+    }
+    return;
+  }
+
+  async getNextId(
+    field: string,
+    discriminator?: string,
+  ): Promise<
+    | void
+    | ObjectId
+    | Binary
+    | string
+    | number
+    | Promise<number>
+    | Promise<string>
+  > {
+    const fieldConfig = this.getFieldConfig(field, discriminator);
+
+    if (!fieldConfig) {
+      return throwPluginError(
+        `Requested Field, [${field}] does not have a Field Configuration!`,
+        this.modelName,
+      );
+    }
+
+    switch (fieldConfig.type) {
+      case FieldConfigTypes.ObjectId:
+        return new ObjectId();
+      case FieldConfigTypes.UUID:
+        return getNextIdUUID(fieldConfig);
+
+      case FieldConfigTypes.Number:
+        await this.refreshOptions();
+        return getNextIdNumber(
+          field,
+          this,
+          fieldConfig as NumberFieldConfig,
+          '',
+          0,
+          true,
+        );
+      case FieldConfigTypes.String:
+        await this.refreshOptions();
+        return getNextIdString(field, this, fieldConfig, '', 0, true);
+    }
   }
 
   appendState(state: Partial<SchemaState>) {
