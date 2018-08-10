@@ -3,7 +3,7 @@
 import type { ObjectId } from 'mongoose';
 import EventEmitter from 'events';
 import type { MongooseSchema, MongooseModel } from 'mongoose';
-import type { AssignerOptions, FieldConfig } from './assigner.interfaces';
+import type { AssignerOptions, AssignerPluginOptions, FieldConfig } from './assigner.interfaces';
 import type { SchemaState } from './LocalStateStore';
 
 export interface NormalisedOptions {
@@ -29,13 +29,13 @@ declare export class MongooseIdAssigner extends EventEmitter {
   retryMillis: number;
   options: NormalisedOptions;
   readyState: number;
-  constructor(schema: MongooseSchema<any>, options: AssignerOptions): this;
+  constructor(model: MongooseModel<any>, options?: AssignerOptions): this;
   state: SchemaState;
   collection: any;
   static plugin(
     schema: MongooseSchema<any>,
-    options: AssignerOptions,
-  ): MongooseIdAssigner;
+    options: AssignerPluginOptions,
+  ): boolean;
   refreshOptions(): Promise<void>;
   getFieldConfig(
     field: string,

@@ -166,20 +166,20 @@ function normaliseFieldsConfigMap(
 }
 
 export function normaliseOptions(
+  modelName: string,
   schema: Schema,
-  options: AssignerOptions,
+  options?: AssignerOptions,
 ): NormalisedOptions {
-  if (!options) {
-    throw throwPluginError('Plugin Options not specified!');
-  }
-
-  if (!options.modelName) {
+  if (!modelName) {
     throw throwPluginError('Plugin `modelName` must be defined!');
   }
 
   const normalised: NormalisedOptions = {
-    modelName: options.modelName,
-    ...normaliseFieldsConfigMap(options.modelName, options.fields),
+    modelName,
+    ...normaliseFieldsConfigMap(
+      modelName,
+      options ? options.fields : undefined,
+    ),
   };
 
   normalised.fields = normalised.fields
@@ -192,7 +192,7 @@ export function normaliseOptions(
   }
 
   // cannot rely on discriminatorKey as its default __t
-  if (schema.get('discriminatorKey') && options.discriminators) {
+  if (options && options.discriminators) {
     const discriminatorMap: Map<string, Map<string, FieldConfig>> = new Map();
     for (const dName in options.discriminators) {
       if (!options.discriminators.hasOwnProperty(dName)) {
