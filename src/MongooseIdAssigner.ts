@@ -106,7 +106,7 @@ export class MongooseIdAssigner extends EventEmitter {
     const { model, error } = this.state;
     if (!model) {
       if (error) {
-        throwPluginError('Cannot read Model, Error At Initialisation' + error);
+        throwPluginError('Cannot read Model, Error At Initialisation ' + error);
       } else {
         throwPluginError('Cannot read Model, Not Initialised');
       }
