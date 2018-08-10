@@ -74,7 +74,12 @@ export type DiscriminatorConfigMap = {
  * Then setup assigner for _id field, does not use network
  */
 export type AssignerOptions = {
-  modelName: string,
   fields?: AssignerFieldsConfigMap,
   discriminators?: DiscriminatorConfigMap,
 };
+
+export type AssignerPluginOptions = {
+  modelName: string,
+  fields?: AssignerFieldsConfigMap,
+  discriminators?: DiscriminatorConfigMap,
+}

@@ -39,21 +39,17 @@ describe('LocalStateStore', () => {
 
   describe('setCollName()', () => {
     let exampleIA: MongooseIdAssigner;
-
-    beforeAll(() => {
-      localStateStore.clear();
-      exampleIA = new MongooseIdAssigner(ExampleSchema, {
-        modelName: 'Example',
-      });
-    });
+    let count = 0;
 
     it('should set Assigner collection Name', async () => {
       // at bootstrapping, before any IA initialises
+      localStateStore.clear();
       localStateStore.setCollName('newName');
-      const ExampleModel = mongoose.model('Example', ExampleSchema);
+      const ExampleModel = mongoose.model('Example' + ++count, ExampleSchema);
+      exampleIA = new MongooseIdAssigner(ExampleModel);
 
       try {
-        await exampleIA.initialise(ExampleModel);
+        await exampleIA.initialise();
         expect(exampleIA.collection.collectionName).toBe('newName');
       } catch (e) {
         expect(e).toBeUndefined();
@@ -61,10 +57,12 @@ describe('LocalStateStore', () => {
     });
 
     it('should throw Error if an Assigner already Initialised', async () => {
-      const ExampleModel = mongoose.model('Example', ExampleSchema);
+      localStateStore.clear();
+      const ExampleModel = mongoose.model('Example' + ++count, ExampleSchema);
+      exampleIA = new MongooseIdAssigner(ExampleModel);
 
       try {
-        await exampleIA.initialise(ExampleModel);
+        await exampleIA.initialise();
         expect(() => localStateStore.setCollName('newName')).toThrowError(
           /(setCollName)/,
         );
@@ -79,9 +77,11 @@ describe('LocalStateStore', () => {
 
     beforeAll(() => {
       localStateStore.clear();
-      exampleIA = new MongooseIdAssigner(ExampleSchema, {
-        modelName: 'Example',
-      });
+      exampleIA = new MongooseIdAssigner(
+        ExampleSchema as any,
+        { modelName: 'example' } as any,
+        true,
+      );
     });
 
     it('should emit events on idAssigner corresponding to idAssigner readyState', async () => {
