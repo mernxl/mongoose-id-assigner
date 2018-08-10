@@ -1,4 +1,3 @@
-import { Schema } from 'mongoose';
 import {
   AssignerFieldsConfigMap,
   AssignerOptions,
@@ -49,7 +48,7 @@ function checkFieldConfig(
     throwPluginError('nextIdFunction must be a `Function`!', modelName, field);
   }
 
-  if (isNumber(config) && config.nextIdFunction) {
+  if (isNumber(config)) {
     if (config.incrementBy && typeof config.incrementBy !== 'number') {
       throwPluginError(
         'incrementBy must be of type `number`!',
@@ -58,8 +57,9 @@ function checkFieldConfig(
       );
     }
     if (
+      config.nextIdFunction &&
       typeof config.nextIdFunction(config.nextId, config.incrementBy) !==
-      'number'
+        'number'
     ) {
       throwPluginError(
         'nextIdFunction must return nextId of type `number`!',
@@ -149,7 +149,11 @@ function normaliseFieldsConfigMap(
       (fieldConfig && typeof fieldConfig !== 'object') ||
       !FieldConfigTypes[fieldConfig.type]
     ) {
-      throwPluginError(`Unknown Field Type for field [${field}]`, modelName);
+      throwPluginError(
+        `Unknown FieldConfigType ${fieldConfig}`,
+        modelName,
+        field,
+      );
     }
 
     if (fieldConfig && typeof fieldConfig === 'object') {
@@ -167,7 +171,6 @@ function normaliseFieldsConfigMap(
 
 export function normaliseOptions(
   modelName: string,
-  schema: Schema,
   options?: AssignerOptions,
 ): NormalisedOptions {
   if (!modelName) {

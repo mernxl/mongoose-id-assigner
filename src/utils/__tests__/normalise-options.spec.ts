@@ -7,79 +7,21 @@ import {
 import { NormalisedOptions } from '../../MongooseIdAssigner';
 import { normaliseOptions } from '../normalise-options';
 
-const schema = new Schema({});
-
 describe('normaliseOptions()', () => {
   it('should throw error if no modelName', () => {
-    expect(() => normaliseOptions('', schema, {} as any)).toThrowError(
-      /(`modelName`)/,
-    );
+    expect(() => normaliseOptions('', {} as any)).toThrowError(/(`modelName`)/);
   });
 
   it('should throw Error if Type not found', () => {
     expect(() =>
-      normaliseOptions('AAA', schema, {
+      normaliseOptions('AAA', {
         fields: {
           _id: {
             type: '404',
           },
         } as any,
       }),
-    ).toThrowError(
-      '[MongooseIdAssigner], Model: AAA, Unknown Field Type for field [_id]',
-    );
-  });
-
-  describe('normaliseFieldConfigMap()', () => {
-    it('should throw error if no nextId for Number and String, no FieldConfig', () => {
-      const option1: AssignerOptions = {
-        fields: {
-          number: FieldConfigTypes.Number, // throws exception, no nextId
-        },
-      };
-      const option2: AssignerOptions = {
-        fields: {
-          string: FieldConfigTypes.String, // throws error, no nextId
-        },
-      };
-
-      expect(() => normaliseOptions('Tests', schema, option1)).toThrowError(
-        /(nextId not provided for field type)/,
-      );
-      expect(() => normaliseOptions('Tests', schema, option2)).toThrowError(
-        /(nextId not provided for field type)/,
-      );
-    });
-
-    it('should be optimised at sting catchall', () => {
-      const pluginOptions: AssignerOptions = {
-        discriminators: {
-          ['Person']: {
-            _id: '12T1542',
-          },
-        },
-      };
-
-      const pluginExpected: NormalisedOptions = {
-        modelName: 'Character',
-        network: true,
-        fields: new Map<string, FieldConfig>([
-          ['_id', { type: FieldConfigTypes.ObjectId }],
-        ]),
-        discriminators: new Map<string, Map<string, FieldConfig>>([
-          [
-            'Person',
-            new Map<string, FieldConfig>([
-              ['_id', { type: FieldConfigTypes.String, nextId: '12T1542' }],
-            ]),
-          ],
-        ]),
-      };
-
-      expect(normaliseOptions('Character', schema, pluginOptions)).toEqual(
-        pluginExpected,
-      );
-    });
+    ).toThrowError(/(Unknown FieldConfigType)/);
   });
 
   it('should normalise options', () => {
@@ -143,6 +85,162 @@ describe('normaliseOptions()', () => {
       ]),
     };
 
-    expect(normaliseOptions('Person', schema, options)).toEqual(expected);
+    expect(normaliseOptions('Person', options)).toEqual(expected);
+  });
+
+  describe('normaliseFieldConfigMap()', () => {
+    it('should throw error if no nextId for Number and String, no FieldConfig', () => {
+      const option1: AssignerOptions = {
+        fields: {
+          number: FieldConfigTypes.Number, // throws exception, no nextId
+        },
+      };
+      const option2: AssignerOptions = {
+        fields: {
+          string: FieldConfigTypes.String, // throws error, no nextId
+        },
+      };
+
+      expect(() => normaliseOptions('Tests', option1)).toThrowError(
+        /(nextId not provided for field type Number)/,
+      );
+      expect(() => normaliseOptions('Tests', option2)).toThrowError(
+        /(nextId not provided for field type String)/,
+      );
+    });
+
+    it('should be optimised at sting catchall', () => {
+      const pluginOptions: AssignerOptions = {
+        discriminators: {
+          ['Person']: {
+            _id: '12T1542',
+          },
+        },
+      };
+
+      const pluginExpected: NormalisedOptions = {
+        modelName: 'Character',
+        network: true,
+        fields: new Map<string, FieldConfig>([
+          ['_id', { type: FieldConfigTypes.ObjectId }],
+        ]),
+        discriminators: new Map<string, Map<string, FieldConfig>>([
+          [
+            'Person',
+            new Map<string, FieldConfig>([
+              ['_id', { type: FieldConfigTypes.String, nextId: '12T1542' }],
+            ]),
+          ],
+        ]),
+      };
+
+      expect(normaliseOptions('Character', pluginOptions)).toEqual(
+        pluginExpected,
+      );
+    });
+
+    describe('checkFieldConfig()', () => {
+      it('should throw an error if FieldConfigType does not match nextId type', () => {
+        const option: AssignerOptions = {
+          fields: {
+            number: {
+              type: FieldConfigTypes.Number,
+              nextId: '33' as any, // type must be number
+            },
+          },
+        };
+
+        expect(() => normaliseOptions('Tests', option)).toThrowError(
+          /(nextId is required, should have as type Number)/,
+        );
+      });
+
+      it('should throw an error UUID version passed is is unsupported', () => {
+        const option: AssignerOptions = {
+          fields: {
+            number: {
+              type: FieldConfigTypes.UUID,
+              version: 3 as any,
+            },
+          },
+        };
+
+        expect(() => normaliseOptions('Tests', option)).toThrowError(
+          /(UUID version must be either 1 or 4!)/,
+        );
+      });
+
+      it('should throw an if incrementBy is not of type Number', () => {
+        const option: AssignerOptions = {
+          fields: {
+            number: {
+              type: FieldConfigTypes.Number,
+              incrementBy: 'string' as any,
+              nextId: 4444,
+            },
+          },
+        };
+
+        expect(() => normaliseOptions('Tests', option)).toThrowError(
+          /(incrementBy must be of type `number`!)/,
+        );
+      });
+
+      it('should throw error if nextIdFunctions is not of type function', () => {
+        const option1: AssignerOptions = {
+          fields: {
+            number: {
+              type: FieldConfigTypes.Number,
+              nextId: 44,
+              nextIdFunction: 'string' as any,
+            },
+          },
+        };
+        const option2: AssignerOptions = {
+          fields: {
+            string: {
+              type: FieldConfigTypes.String,
+              nextId: '444',
+              nextIdFunction: 444 as any,
+            },
+          },
+        };
+
+        expect(() => normaliseOptions('Tests', option1)).toThrowError(
+          /(nextIdFunction must be a `Function`!)/,
+        );
+        expect(() => normaliseOptions('Tests', option2)).toThrowError(
+          /(nextIdFunction must be a `Function`!)/,
+        );
+      });
+
+      it('should throw error if return types for nextIdFunctions do not return respective types', () => {
+        const option1: AssignerOptions = {
+          fields: {
+            number: {
+              type: FieldConfigTypes.Number,
+              nextId: 44,
+              nextIdFunction: () => 'string' as any,
+            },
+          },
+        };
+        const option2: AssignerOptions = {
+          fields: {
+            string: {
+              type: FieldConfigTypes.String,
+              nextId: '444',
+              nextIdFunction: () => 444 as any,
+            },
+          },
+        };
+
+        expect(() => normaliseOptions('Tests', option1)).toThrowError(
+          /(nextIdFunction must return nextId of type `number`!)/,
+        );
+        expect(() => normaliseOptions('Tests', option2)).toThrowError(
+          /(nextIdFunction must return nextId of type `string`!)/,
+        );
+      });
+    });
   });
 });

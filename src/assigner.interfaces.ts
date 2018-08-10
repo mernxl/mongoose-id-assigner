@@ -27,7 +27,7 @@ export interface NumberFieldConfig {
 export interface UUIDFieldConfig {
   type: 'UUID' | 'GUID';
   asBinary?: boolean; // default string
-  version?: number; // supports 1 and 4, default 1
+  version?: 1 | 4; // supports 1 and 4, default 1
   versionOptions?: any;
 }
 
