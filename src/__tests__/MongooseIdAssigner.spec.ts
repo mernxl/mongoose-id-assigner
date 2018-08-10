@@ -19,7 +19,11 @@ afterAll(async () => {
 
 describe('MongooseIdAssigner', () => {
   let exampleSchema: Schema;
+  let modelName: string;
+  let count = 0;
+
   beforeEach(() => {
+    modelName = 'ex' + ++count;
     exampleSchema = getSchema(1);
     localStateStore.clear();
   });
@@ -31,6 +35,20 @@ describe('MongooseIdAssigner', () => {
   });
 
   describe('basics', () => {
+    it('should throw error if no model passed at Constructor', () => {
+      expect(() => new MongooseIdAssigner('' as any)).toThrowError(
+        /(Provide a Model to the Constructor)/,
+      );
+    });
+
+    it('should throw error if using same model to instantiate IdAssigner', () => {
+      const repeat = mongoose.model('repeat', exampleSchema);
+      expect(new MongooseIdAssigner(repeat)).toBeTruthy();
+      expect(() => new MongooseIdAssigner(repeat)).toThrowError(
+        /(Provided Model already has an Assigner Instance!)/,
+      );
+    });
+
     it('should save state to localStateStore', () => {
       MongooseIdAssigner.plugin(exampleSchema, {
         modelName: 'example',
@@ -59,18 +77,6 @@ describe('MongooseIdAssigner', () => {
       // next tick
       await waitPromise(1);
       expect(ExampleIA.readyState).toBe(1);
-
-      const doc = await exampleModel.create({ personId: 'mernxl' });
-
-      expect(doc._id).toBeTruthy();
-    });
-
-    it('should apply plugin with method MongooseIdAssigner.plugin', async () => {
-      MongooseIdAssigner.plugin(exampleSchema, {
-        modelName: 'example3',
-      });
-
-      exampleModel = mongoose.model('example3', exampleSchema);
 
       const doc = await exampleModel.create({ personId: 'mernxl' });
 
@@ -213,7 +219,9 @@ describe('MongooseIdAssigner', () => {
             nextId: 'SPEC-7382-4344-3232',
             separator: '-',
           },
-          uuidFieldString: FieldConfigTypes.UUID,
+          uuidFieldString: {
+            type: FieldConfigTypes.UUID,
+          },
           uuidFieldBuffer: {
             type: FieldConfigTypes.UUID,
             version: 1,
@@ -275,190 +283,265 @@ describe('MongooseIdAssigner', () => {
     });
   });
 
-  describe('initialise()', () => {
-    it('should initialise the plugin without passing model', () => {
-      exampleModel = mongoose.model('example9', exampleSchema);
-      const ExampleIA = new MongooseIdAssigner(exampleModel, {
-        fields: {
-          _id: {
-            type: FieldConfigTypes.String,
-            separator: 'T',
-            nextId: '34T5565',
-          },
-        },
-      });
+  describe('instance', () => {
+    describe('collection', () => {
+      it('should return the IdAssigner Collection', async () => {
+        exampleModel = mongoose.model(modelName, exampleSchema);
+        const ExampleIA = new MongooseIdAssigner(exampleModel);
+        await ExampleIA.initialise();
 
-      return ExampleIA.initialise()
-        .then(state => expect(state).toBe(1))
-        .catch(e => expect(e).toBeUndefined());
-    });
-
-    it('should return state if called multiple times', () => {
-      expect.assertions(2);
-      exampleModel = mongoose.model('example10', exampleSchema);
-      const ExampleIA = new MongooseIdAssigner(exampleModel, {
-        fields: {
-          _id: {
-            type: FieldConfigTypes.String,
-            separator: 'T',
-            nextId: '34T5565',
-          },
-        },
-      });
-
-      ExampleIA.initialise(exampleModel)
-        .then(state => expect(state).toBe(1))
-        .catch(e => expect(e).toBeUndefined());
-
-      return ExampleIA.initialise()
-        .then(state => expect(state).toBe(1))
-        .catch(e => expect(e).toBeUndefined());
-    });
-  });
-
-  describe('discriminators', () => {
-    let characterSchema: Schema, personSchema: Schema, droidSchema: Schema;
-    beforeEach(() => {
-      characterSchema = getSchema(1);
-      personSchema = getSchema(2);
-      droidSchema = getSchema(3);
-    });
-
-    it('should create noNetwork discriminators', async () => {
-      const options: AssignerOptions = {
-        fields: {
-          _id: FieldConfigTypes.GUID,
-        },
-        discriminators: {
-          Person1: {
-            license: FieldConfigTypes.ObjectId,
-          },
-          Droid1: {
-            make: FieldConfigTypes.UUID,
-          },
-        },
-      };
-
-      const characterModel = mongoose.model('example11', characterSchema);
-      const CharacterIA = new MongooseIdAssigner(characterModel, options);
-      const personModel = characterModel.discriminator('Person1', personSchema);
-      const droidModel = characterModel.discriminator('Droid1', droidSchema);
-      try {
-        const character = await characterModel.create({
-          friends: 'placeholder',
-        });
-        const person = await personModel.create({ friends: 'placeholder' });
-        const droid = await droidModel.create({ friends: 'placeholder' });
-
-        expect(CharacterIA.options.network).toBe(false);
-        expect((character as any)._id).toMatch(/-+/);
-        expect(typeof (person as any).license).toBe('string');
-        expect((droid as any).make).toMatch(/-+/);
-      } catch (e) {
-        expect(e).toBeUndefined();
-      }
-    });
-
-    it('should create discriminators network', async () => {
-      const options: AssignerPluginOptions = {
-        modelName: 'example12',
-        fields: {
-          someId: 4444,
-        },
-        discriminators: {
-          Person: {
-            _id: FieldConfigTypes.ObjectId,
-            license: '786-TSJ-000', // default separator `-`
-          },
-          Droid: {
-            _id: FieldConfigTypes.UUID,
-            make: {
-              type: FieldConfigTypes.String,
-              nextId: '18Y4433',
-              separator: 'Y',
-            },
-            timestamp: Date.now(),
-          },
-        },
-      };
-
-      characterSchema.plugin(MongooseIdAssigner.plugin, options);
-
-      const characterModel = mongoose.model('example12', characterSchema);
-      const personModel = characterModel.discriminator('Person', personSchema);
-      const droidModel = characterModel.discriminator('Droid', droidSchema);
-
-      try {
-        const character = await characterModel.create({
-          friends: 'placeholder',
-        });
-        const person = await personModel.create({ friends: 'placeholder' });
-        const droid = await droidModel.create({ friends: 'placeholder' });
-        const person1 = await personModel.create({ friends: 'placeholder' });
-        const droid1 = await droidModel.create({ friends: 'placeholder' });
-
-        expect((character as any).someId).toBe(4444);
-        expect(typeof (person as any)._id).toBe('string');
-        expect((person as any).someId).toBe(4445);
-        expect((person as any).license).toBe('786-TSJ-000');
-        expect((droid as any)._id).toMatch(/-+/);
-        expect((droid as any).someId).toBe(4446);
-        expect((droid as any).make).toBe('18Y4433');
-
-        expect((person1 as any).someId).toBe(4447);
-        expect((person1 as any).license).toBe('786-TSJ-001');
-
-        expect((droid1 as any).someId).toBe(4448);
-        expect((droid1 as any).make).toBe('18Y4434');
-      } catch (e) {
-        expect(e).toBeUndefined();
-      }
-    });
-  });
-
-  describe('getNextId()', () => {
-    it('should throw error message if field not found', async () => {
-      const characterSchema = getSchema(1);
-
-      const options: AssignerPluginOptions = {
-        modelName: 'example13',
-        discriminators: {
-          Person13: {
-            license: 4444,
-          },
-        },
-      };
-
-      const characterIA = new MongooseIdAssigner(
-        characterSchema as any,
-        options,
-        true,
-      );
-
-      try {
-        await characterIA.getNextId('not-found', 'Person13');
-      } catch (e) {
-        expect(e.message).toMatch(
-          /(\[not-found] does not have a Field Configuration)/,
+        expect(ExampleIA.collection.collectionName).toMatch(
+          localStateStore.getCollName(),
         );
-      }
+      });
+
+      it('should throw error if IdAssigner not Initialise', async () => {
+        const ExampleIA = new MongooseIdAssigner(
+          exampleSchema as any,
+          { modelName } as any,
+          true,
+        );
+
+        expect(() => ExampleIA.collection).toThrowError(
+          /(Cannot read Model, Not Initialised)/,
+        );
+      });
+
+      it('should throw error if IdAssigner Erred on initialise', async () => {
+        const ExampleIA = new MongooseIdAssigner(
+          exampleSchema as any,
+          { modelName } as any,
+          true,
+        );
+        ExampleIA.appendState({ error: new Error('I Occurred') });
+
+        expect(() => ExampleIA.collection).toThrowError(
+          /(Cannot read Model, Error At Initialisation Error: I Occurred)/,
+        );
+      });
     });
-    it('should return nextId depending on fieldConfig', async () => {
-      const options: AssignerOptions = {
-        fields: {
-          photoId: 4444,
-        },
-      };
 
-      const model = mongoose.model('example14', exampleSchema);
-      const exampleIA = new MongooseIdAssigner(model, options);
+    describe('initialise()', () => {
+      it('should initialise the plugin without passing model', () => {
+        exampleModel = mongoose.model('example9', exampleSchema);
+        const ExampleIA = new MongooseIdAssigner(exampleModel, {
+          fields: {
+            _id: {
+              type: FieldConfigTypes.String,
+              separator: 'T',
+              nextId: '34T5565',
+            },
+          },
+        });
 
-      try {
-        await model.create({ photoId: 21 });
-        expect(await exampleIA.getNextId('photoId')).toBe(4445);
-      } catch (e) {
-        expect(e).toBeUndefined();
-      }
+        return ExampleIA.initialise()
+          .then(state => expect(state).toBe(1))
+          .catch(e => expect(e).toBeUndefined());
+      });
+
+      it('should return state if called multiple times', () => {
+        expect.assertions(2);
+        exampleModel = mongoose.model('example10', exampleSchema);
+        const ExampleIA = new MongooseIdAssigner(exampleModel, {
+          fields: {
+            _id: {
+              type: FieldConfigTypes.String,
+              separator: 'T',
+              nextId: '34T5565',
+            },
+          },
+        });
+
+        ExampleIA.initialise(exampleModel)
+          .then(state => expect(state).toBe(1))
+          .catch(e => expect(e).toBeUndefined());
+
+        return ExampleIA.initialise()
+          .then(state => expect(state).toBe(1))
+          .catch(e => expect(e).toBeUndefined());
+      });
+    });
+
+    describe('getNextId()', () => {
+      it('should throw error message if field not found', async () => {
+        const characterSchema = getSchema(1);
+
+        const options: AssignerPluginOptions = {
+          modelName: 'example13',
+          discriminators: {
+            Person13: {
+              license: 4444,
+            },
+          },
+        };
+
+        const characterIA = new MongooseIdAssigner(
+          characterSchema as any,
+          options,
+          true,
+        );
+
+        try {
+          await characterIA.getNextId('not-found', 'Person13');
+        } catch (e) {
+          expect(e.message).toMatch(
+            /(\[not-found] does not have a Field Configuration)/,
+          );
+        }
+      });
+      it('should return nextId depending on fieldConfig', async () => {
+        const options: AssignerOptions = {
+          fields: {
+            photoId: 4444,
+          },
+        };
+
+        const model = mongoose.model('example14', exampleSchema);
+        const exampleIA = new MongooseIdAssigner(model, options);
+
+        try {
+          await model.create({ photoId: 21 });
+          expect(await exampleIA.getNextId('photoId')).toBe(4445);
+        } catch (e) {
+          expect(e).toBeUndefined();
+        }
+      });
+    });
+  });
+
+  describe('static', () => {
+    describe('plugin()', () => {
+      it('should throw error if no schema passed in', () => {
+        expect(() =>
+          MongooseIdAssigner.plugin('' as any, {} as any),
+        ).toThrowError(/(Should be called using schema.plugin)/);
+      });
+
+      it('should throw error if no options passed', () => {
+        expect(() =>
+          MongooseIdAssigner.plugin(new Schema({}), '' as any),
+        ).toThrowError(/(Plugin Options not specified!)/);
+      });
+
+      it('should apply plugin to schema', async () => {
+        MongooseIdAssigner.plugin(exampleSchema, {
+          modelName,
+        });
+
+        exampleModel = mongoose.model(modelName, exampleSchema);
+
+        const doc = await exampleModel.create({ personId: 'mernxl' });
+
+        expect(doc._id).toBeTruthy();
+      });
+    });
+  });
+
+  describe('integrations', () => {
+    describe('discriminators', () => {
+      let characterSchema: Schema, personSchema: Schema, droidSchema: Schema;
+      beforeEach(() => {
+        characterSchema = getSchema(1);
+        personSchema = getSchema(2);
+        droidSchema = getSchema(3);
+      });
+
+      it('should create noNetwork discriminators', async () => {
+        const options: AssignerOptions = {
+          fields: {
+            _id: FieldConfigTypes.GUID,
+          },
+          discriminators: {
+            Person1: {
+              license: FieldConfigTypes.ObjectId,
+            },
+            Droid1: {
+              make: FieldConfigTypes.UUID,
+            },
+          },
+        };
+
+        const characterModel = mongoose.model('example11', characterSchema);
+        const CharacterIA = new MongooseIdAssigner(characterModel, options);
+        const personModel = characterModel.discriminator(
+          'Person1',
+          personSchema,
+        );
+        const droidModel = characterModel.discriminator('Droid1', droidSchema);
+        try {
+          const character = await characterModel.create({
+            friends: 'placeholder',
+          });
+          const person = await personModel.create({ friends: 'placeholder' });
+          const droid = await droidModel.create({ friends: 'placeholder' });
+
+          expect(CharacterIA.options.network).toBe(false);
+          expect((character as any)._id).toMatch(/-+/);
+          expect(typeof (person as any).license).toBe('string');
+          expect((droid as any).make).toMatch(/-+/);
+        } catch (e) {
+          expect(e).toBeUndefined();
+        }
+      });
+
+      it('should create discriminators network', async () => {
+        const options: AssignerPluginOptions = {
+          modelName: 'example12',
+          fields: {
+            someId: 4444,
+          },
+          discriminators: {
+            Person: {
+              _id: FieldConfigTypes.ObjectId,
+              license: '786-TSJ-000', // default separator `-`
+            },
+            Droid: {
+              _id: FieldConfigTypes.UUID,
+              make: {
+                type: FieldConfigTypes.String,
+                nextId: '18Y4433',
+                separator: 'Y',
+              },
+              timestamp: Date.now(),
+            },
+          },
+        };
+
+        characterSchema.plugin(MongooseIdAssigner.plugin, options);
+
+        const characterModel = mongoose.model('example12', characterSchema);
+        const personModel = characterModel.discriminator(
+          'Person',
+          personSchema,
+        );
+        const droidModel = characterModel.discriminator('Droid', droidSchema);
+
+        try {
+          const character = await characterModel.create({
+            friends: 'placeholder',
+          });
+          const person = await personModel.create({ friends: 'placeholder' });
+          const droid = await droidModel.create({ friends: 'placeholder' });
+          const person1 = await personModel.create({ friends: 'placeholder' });
+          const droid1 = await droidModel.create({ friends: 'placeholder' });
+
+          expect((character as any).someId).toBe(4444);
+          expect(typeof (person as any)._id).toBe('string');
+          expect((person as any).someId).toBe(4445);
+          expect((person as any).license).toBe('786-TSJ-000');
+          expect((droid as any)._id).toMatch(/-+/);
+          expect((droid as any).someId).toBe(4446);
+          expect((droid as any).make).toBe('18Y4433');
+
+          expect((person1 as any).someId).toBe(4447);
+          expect((person1 as any).license).toBe('786-TSJ-001');
+
+          expect((droid1 as any).someId).toBe(4448);
+          expect((droid1 as any).make).toBe('18Y4434');
+        } catch (e) {
+          expect(e).toBeUndefined();
+        }
+      });
     });
   });
 });

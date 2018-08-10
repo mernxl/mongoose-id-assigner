@@ -82,4 +82,4 @@ export type AssignerPluginOptions = {
   modelName: string,
   fields?: AssignerFieldsConfigMap,
   discriminators?: DiscriminatorConfigMap,
-}
+};
