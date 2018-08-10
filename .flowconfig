@@ -1,11 +1,4 @@
 [ignore]
 .*/coverage/.*
 .*/resources/.*
-
-[include]
-
-[libs]
-
-
-[options]
-
+.*/node_modules/config-chain/test/broken.json
