@@ -3,10 +3,10 @@ import * as mongoose from 'mongoose';
 
 (mongoose as any).Promise = Promise;
 
-const TEST_SITE = process.env.TEST_SITE;
+const IN_MEM = !!process.env.IN_MEM;
 
 export function getMongoose() {
-  if (TEST_SITE === 'travis-ci') {
+  if (IN_MEM) {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
     const originalConnect = mongoose.connect;
@@ -40,13 +40,6 @@ export function getMongoose() {
     return mongoose;
   } else {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
-    /*const originalConnect = mongoose.connect;
-
-    (mongoose as any).connect = () => {
-      originalConnect.bind(mongoose)('mongodb://localhost:27017/test_ia', {
-        useNewUrlParser: true,
-      });
-    };*/
     mongoose.connect(
       'mongodb://localhost:27017/demoDB',
       { useNewUrlParser: true },
