@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 import { Document } from 'mongoose';
 import { MongooseIdAssigner } from '../MongooseIdAssigner';
 import { assignIdNetwork, assignIdNoNetwork } from './assign-fields-ids';
@@ -31,13 +30,7 @@ function configurePreSave(assigner: MongooseIdAssigner) {
     const doc = this as any;
 
     try {
-      if (doc.isNew || doc.e11000) {
-        // if no fields, no discriminators
-        if (!options.fields && !options.discriminators) {
-          doc._id = new ObjectId();
-          return next();
-        }
-
+      if (doc.isNew) {
         if (assigner.state.error) {
           return Promise.reject(
             throwPluginError(

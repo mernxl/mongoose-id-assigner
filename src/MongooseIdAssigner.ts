@@ -80,7 +80,7 @@ export class MongooseIdAssigner extends EventEmitter {
 
     this.retryTime = 20;
     this.retryMillis = 20; // after 20 millis
-    this.options = normaliseOptions(modelName, schema, options);
+    this.options = normaliseOptions(modelName, options);
 
     this.appendState({
       modelName: this.modelName,
