@@ -542,6 +542,73 @@ describe('MongooseIdAssigner', () => {
           expect(e).toBeUndefined();
         }
       });
+
+      it('should request and update respective fields, even if configured at base and discriminators', async () => {
+        const options: AssignerOptions = {
+          fields: {
+            _id: '786-DEF-000',
+            someId: 4444,
+          },
+          discriminators: {
+            [modelName + 'Person']: {
+              _id: '786-PER-000',
+              license: '786-TSJ-000',
+            },
+            [modelName + 'Droid']: {
+              _id: '786-DRD-000',
+              make: {
+                type: FieldConfigTypes.String,
+                nextId: '18Y4433',
+                separator: 'Y',
+              },
+            },
+          },
+        };
+
+        const characterModel = mongoose.model(modelName, characterSchema);
+        const CharacterIA = new MongooseIdAssigner(characterModel, options);
+
+        const personModel = characterModel.discriminator(
+          modelName + 'Person',
+          personSchema,
+        );
+        const droidModel = characterModel.discriminator(
+          modelName + 'Droid',
+          droidSchema,
+        );
+
+        try {
+          const character = await characterModel.create({
+            friends: 'placeholder',
+          });
+          const person = await personModel.create({ friends: 'placeholder' });
+          const droid = await droidModel.create({ friends: 'placeholder' });
+
+          expect((character as any)._id).toBe('786-DEF-000');
+
+          expect((person as any)._id).toBe('786-PER-000');
+          expect(await CharacterIA.getNextId('_id')).toBe('786-DEF-001');
+
+          expect((droid as any)._id).toMatch('786-DRD-000');
+          expect(await CharacterIA.getNextId('_id')).toBe('786-DEF-001');
+
+          const character1 = await characterModel.create({
+            friends: 'placeholder',
+          });
+          const person1 = await personModel.create({ friends: 'placeholder' });
+          const droid1 = await droidModel.create({ friends: 'placeholder' });
+
+          expect((character1 as any)._id).toBe('786-DEF-001');
+
+          expect((person1 as any)._id).toBe('786-PER-001');
+          expect(await CharacterIA.getNextId('_id')).toBe('786-DEF-002');
+
+          expect((droid1 as any)._id).toBe('786-DRD-001');
+          expect(await CharacterIA.getNextId('_id')).toBe('786-DEF-002');
+        } catch (e) {
+          expect(e).toBeUndefined();
+        }
+      });
     });
   });
 });
