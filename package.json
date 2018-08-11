@@ -21,7 +21,7 @@
     "lib"
   ],
   "scripts": {
-    "build": "yarn run prettier && yarn run clean && yarn run tsc -d && yarn run build-flow",
+    "build": "yarn run clean && yarn run tsc -d && yarn run build-flow",
     "build-flow": "find ./src -name '*.js.flow' -not -path '*/__*' | while read filepath; do cp $filepath `echo ./${COPY_TO_FOLDER:-lib}$filepath | sed 's/.\\/src\\//\\//g'`; done",
     "tsc": "tsc",
     "flow": "./node_modules/.bin/flow",
@@ -39,7 +39,7 @@
     "event-to-promise": "^0.8.0"
   },
   "peerDependencies": {
-    "mongoose": ">=4.0.0 || >=5.0.0"
+    "mongoose": ">=4.3.6 || >=5.0.0"
   },
   "optionalDependencies": {
     "uuid": ">=3.0.1"

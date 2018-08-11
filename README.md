@@ -2,9 +2,10 @@
 [![npm](https://img.shields.io/npm/v/mongoose-id-assigner.svg)](https://www.npmjs.com/package/mongoose-id-assigner)
 [![Build Status](https://travis-ci.org/mernxl/mongoose-id-assigner.svg?branch=master)](https://travis-ci.org/mernxl/mongoose-id-assigner)
 [![codecov](https://codecov.io/gh/mernxl/mongoose-id-assigner/branch/master/graph/badge.svg)](https://codecov.io/gh/mernxl/mongoose-id-assigner)
-![Dependencies State](https://david-dm.org/mernxl/mongoose-id-assigner.svg)
+[![Dependencies State](https://david-dm.org/mernxl/mongoose-id-assigner.svg)](https://david-dm.org/mernxl/mongoose-id-assigner)
 ![TypeScript compatible](https://img.shields.io/badge/typescript-compatible-brightgreen.svg)
 ![FlowType compatible](https://img.shields.io/badge/flowtype-compatible-brightgreen.svg)
+[![Code Style Prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 A [Mongoose](http://mongoosejs.com) Plugin. Easily Manage fields that need an id(unique value) on your mongoose model. This plugin does the work of generating, incrementing, and assigning those values(unique) to those fields.
