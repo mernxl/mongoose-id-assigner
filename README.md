@@ -36,6 +36,11 @@ or
 npm install mongoose-id-assigner
 ```
 
+If you wish to use `UUIDs` FieldTypes, then you need to add this package, `uuid`.
+```
+yarn add uuid
+```
+
 ## Basic Usage
 ### Plugin Options
 TypeName: **AssignerOptions**
