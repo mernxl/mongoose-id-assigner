@@ -2,14 +2,10 @@
   "name": "mongoose-id-assigner",
   "version": "0.0.0-semantically-released",
   "description": "A Mongoose Plugin. Easily Manage fields that need an id(unique value) on your mongoose model. This plugin does the work of generating, incrementing, and assigning those values(unique) to those fields.",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "repository": "https://github.com/mernxl/mongoose-id-assigner.git",
   "author": "mernxl <mernxl@gmail.com>",
   "license": "MIT",
-  "files": [
-    "lib"
-  ],
+  "repository": "https://github.com/mernxl/mongoose-id-assigner.git",
+  "bugs": "https://github.com/mernxl/mongoose-id-assigner/issues",
   "keywords": [
     "mongoose",
     "uuid",
@@ -18,6 +14,11 @@
     "incrementer",
     "unique-id",
     "auto-generate"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib"
   ],
   "scripts": {
     "build": "yarn run prettier && yarn run clean && yarn run tsc -d && yarn run build-flow",
