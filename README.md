@@ -80,6 +80,7 @@ const ExampleSchema = new mongoose.Schema({
 
 ### Configuration methods
 **Method 1**: Quick Config, Intended for usage with `schema.plugin(...)`. It initialises only when the first document is about to be saved.
+
 Options Type: `AssignerPluginOptions`.
 ```js
 const options: AssignerPluginOptions  = {
@@ -102,6 +103,7 @@ console.log(doc.uuidFieldString)   --->   '7729e2e0-8f8b-11e8-882d-2dade78bb893'
 
 **Method 2**: Using the `MongooseIdAssigner` constructor, it takes in the `Model` instance as first parameter, then options as second, returning IdAssigner Instance. 
 You can now use the IdAssigner instance to request `nextId`s for particular fields.
+
 Options Type: `AssignerOptions`. 
 ```typescript
 const options: AssignerOptions = {
