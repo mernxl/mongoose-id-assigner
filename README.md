@@ -27,6 +27,8 @@ This is the perfect tool if you wish to work with `discriminators` and have `_id
 - [Working with Discriminators](#working-with-discriminators)
 - [TypeDefinitions](#typedefinitions)
 - [Strain Test](#strain-test,-performs-the-task-below-on-a-locally-hosted-db-instance.)
+- [Contributions](#contributions)
+  - [NextIdFunctions](#nextidfunctions-(incrementer))
 - [License](#license)
 
 ## Installation
@@ -36,7 +38,7 @@ or
 npm install mongoose-id-assigner
 ```
 
-If you wish to use `UUIDs` FieldTypes, then you need to add this package, `uuid`.
+If you wish to use `UUIDs` FieldTypes, then you need to add this package, [uuid](https://github.com/kelektiv/node-uuid).
 ```
 yarn add uuid
 ```
@@ -65,7 +67,6 @@ import * as mongoose from 'mongoose';
 
 const ExampleSchema = new mongoose.Schema({
   _id: String,
-  name: String,
 
   photoId: Number,
   emailId: String,
@@ -77,71 +78,33 @@ const ExampleSchema = new mongoose.Schema({
 });
 ```
 
-Configure the Plugin on Schema you want to work with. You need at least the modelName passed as AssignerOption.
 ### Configuration methods
-**Method 1**: Quick Config, Good if your ids need no network use, case `ObjectId`, `UUID`. It carries out a lazy Initialisation of Model
+**Method 1**: Quick Config, Intended for usage with `schema.plugin(...)`. It initialises only when the first document is about to be saved.
+Options Type: `AssignerPluginOptions`.
 ```js
-const options = {
+const options: AssignerPluginOptions  = {
   modelName: 'ExampleModel',
-  fields: {
-    // if no _id field config, assigner auto adds _id field with type = "ObjectId"
+  fields: {  // if no _id field config, assigner auto adds _id field with type = "ObjectId"
     uuidFieldString: 'UUID',
   }
 };
 
 ExampleSchema.plugin(MongooseIdAssigner.plugin, options);
 
-// No need to initialise if you don't intent to start saving files immediately
-// Saving the first doc triggers the plugin Assigner initialisation for this model.
+// Saving the first doc triggers the IdAssigner initialisation for this model.
 const ExampleModel = mongoose.model('ExampleModel', ExampleSchema);
 
-const doc = await ExampleModel.create({name: 'Mernxl'})
+const doc = await ExampleModel.create({name: 'Mernxl'});
 
 console.log(doc._id)   --->   '5b57a1d929239e59b4e3d7f3'     // schema field type is String
 console.log(doc.uuidFieldString)   --->   '7729e2e0-8f8b-11e8-882d-2dade78bb893'
 ```
 
-**Method 2**: Request Assigner Instance, If you have initialisation logic, you need to initialise the plugin.
-Calling initialise is really optional, except you want to query nextIds, or your collection is really a very busy one.
-You may just call it and ignore the promise.
-```js
-const options = {
-  modelName: 'ExampleModel',
-  fields: {
-    photoId: {
-      type: FieldConfigTypes.Number,
-      nextId: 0000,
-      incrementBy: 4,
-      nextIdFunction: (nextId, incrementBy) => nextId + incrementBy,
-    }
-  }
-};
-
-// If you have startup logic that needs to save files, request instance then initialise
-const ExampleIA = MongooseIdAssigner.plugin(ExampleSchema, options);
-
-const ExampleModel = mongoose.model('ExampleModel', ExampleSchema);
-
-// returns a promise...
-ExampleIA.initialise(ExampleModel)
-  .then( async (readyCode) => {
-    const doc1 = await ExampleModel.create({name: 'Mongoose'});
-    
-    console.log(doc1._id)   --->   '5b57a1d929239e59b4e3d7f3'
-    console.log(doc1.photoId)   --->   0000
-    
-    const doc2 = await ExampleModel.create({name: 'IdAssigner'});
-    
-    console.log(doc2._id)   --->   '5b57a3612000c406eceaefc2'
-    console.log(doc2.photoId)   --->   0004
-  })
-  .catch((error) => /* ... Error at initialisation process, do error stuff */)
-```
-
-**Method 3**: Request Assigner Instance, This method also returns IdAssigner instance.
-```js
-const options = {
-  modelName: 'ExampleModel',
+**Method 2**: Using the `MongooseIdAssigner` constructor, it takes in the `Model` instance as first parameter, then options as second, returning IdAssigner Instance. 
+You can now use the IdAssigner instance to request `nextId`s for particular fields.
+Options Type: `AssignerOptions`. 
+```typescript
+const options: AssignerOptions = {
   fields: {
     _id: {
       type: FieldConfigTypes.String,
@@ -159,30 +122,28 @@ const options = {
   },
 };
 
-// If you have startup logic that needs to save files, request instance then initialise
-const ExampleIA = new MongooseIdAssigner(ExampleSchema, options); // <- diff
-
 const ExampleModel = mongoose.model('ExampleModel', ExampleSchema);
 
-// returns a promise...
-ExampleIA.initialise(ExampleModel)
-  .then( async (readyCode) => {
-    const doc1 = await ExampleModel.create({name: 'Mongoose'});
+const ExampleIA = new MongooseIdAssigner(ExampleModel, options);
+
+const doc1 = await ExampleModel.create({name: 'Mongoose'});
     
-    console.log(doc1._id)   --->   '34T5565'
-    console.log(doc1.uuidFieldBuffer)   --->  Binary { _bsontype: 'Binary', sub_type: 4, position: 36, buffer: B... }
+console.log(doc1._id);   --->   '34T5565'
+console.log(doc1.uuidFieldBuffer);   --->  Binary { _bsontype: 'Binary', sub_type: 4, position: 36, buffer: B... }
+
+// it getOnly, does not write off in db
+// TODO: Implement hold nextId with timeout
+console.log((await ExampleIA.getNextId('_id')))   --->   '34T5566'
+
+const doc2 = await ExampleModel.create({name: 'IdAssigner'});
     
-    const doc2 = await ExampleModel.create({name: 'IdAssigner'});
-    
-    console.log(doc2._id)   --->   '34T5566'
-    console.log(doc2.uuidFieldBuffer)   --->   Binary { _bsontype: 'Binary', sub_type: 4, position: 36, buffer: B... }
-  })
-  .catch((error) => /* ... do error stuff */)
+console.log(doc2._id);   --->   '34T5566'
+console.log(doc2.uuidFieldBuffer);   --->   Binary { _bsontype: 'Binary', sub_type: 4, position: 36, buffer: B... }
 ```
 
 ## Working with Discriminators
 You may have a discriminator Instance and want to have different id Types, or fields on one discriminator need to be autogenerated uniquely, here is an example;
-```js
+```typescript
 const CharacterSchema = new mongoose.Schema({
   _id: String,
 
@@ -201,8 +162,7 @@ const DroidSchema = new mongoose.Schema({
   make: String,
 });
 
-const options = { 
-  modelName: 'Character',
+const options: AssignerOptions = {
   fields: { 
     someId: 4444,
   },
@@ -222,9 +182,9 @@ const options = {
   },
 };
 
-MongooseIdAssigner.plugin(characterSchema, options);
-
 const characterModel = mongoose.model('example10', characterSchema);
+const CharacterIA = new MongooseIdAssigner(characterModel, options);
+
 const personModel = characterModel.discriminator('Person', personSchema);
 const droidModel = characterModel.discriminator('Droid', droidSchema);
 
@@ -237,6 +197,7 @@ const droid1 = await droidModel.create({ friends: 'placeholder' });
 
 console.log(character._id)   --->   '5b59d98617e2edc57ede52b8'
 console.log(character.someId)   --->   4444
+console.log((await CharacterIA.getNextId('someId')))  --->   4445
 
 console.log(person._id)   --->   '5b59d98617e2edc57ede52ba'
 console.log(person.someId)   --->   4445
@@ -245,23 +206,34 @@ console.log(person.license)   --->   '786-TSJ-000'
 console.log(droid._id)   --->   '48db52c0-90df-11e8-b43b-ffe3d317727b'
 console.log(droid.someId)   --->   4446
 console.log(droid.make)   --->   '18Y4433'
-          
+console.log((await CharacterIA.getNextId('make', 'Droid')))  --->   '18Y4434'
+             
 console.log(person._id)   --->   '5b59d98617e2edc57ede52bb'
 console.log(person1.someId)   --->   4447
 console.log(person1.license)   --->   '786-TSJ-001'
+console.log((await CharacterIA.getNextId('license', 'Person')))  --->   '786-TSJ-002'       
           
 console.log(droid1._id)   --->   'eb185fb0-90df-11e8-800d-dff50a2d22a3'          
 console.log(droid1.someId)   --->   4448
 console.log(droid1.make)   --->   '18Y4434'
 ```
 
-### TypeDefinitions
+## NextId `WIP`
+It may arise that you need to query and use the nextId to at the front-end. In this case, you just need to 
+get an instance of the Assigner, then use the `getNextId` method. It is async method as it queries for `Number` and `String` cases.
+
+## TypeDefinitions
 ```typescript
 /**
  * If Options does not contain fields(AssignerFieldsConfigMap),
  * Then setup assigner for _id field, does not use network
  */
 export interface AssignerOptions {
+  fields?: AssignerFieldsConfigMap;
+  discriminators?: DiscriminatorConfigMap;
+}
+
+export interface AssignerPluginOptions {
   modelName: string;
   fields?: AssignerFieldsConfigMap;
   discriminators?: DiscriminatorConfigMap;
@@ -321,7 +293,7 @@ interface NumberFieldConfig {
 interface UUIDFieldConfig {
   type: 'UUID' | 'GUID';
   asBinary?: boolean; // default string, if true, saves as Binary
-  version?: number; // supports 1 and 4, default 1
+  version?: 1 | 4; // supports 1 and 4, default 1
   versionOptions?: any;
 }
 ```
@@ -336,7 +308,6 @@ describe('MongooseIdAssigner', () => {
 
   it('should be robust enough to avoid duplicates', async () => {
     const options: AssignerOptions = {
-      modelName: 'example6',
       fields: {
         _id: '33333',
         photoId: 44444,
@@ -357,14 +328,18 @@ describe('MongooseIdAssigner', () => {
     };
 
     try {
-      const plugin = MongooseIdAssigner.plugin(exampleSchema, options);
-
-      const exampleModel = mongoose.model('example6', exampleSchema);
+      const exampleModel = mongoose.model('TestModel', exampleSchema);
+      
+      const ExampleIA = new MongooseIdAssigner(exampleModel, options);
+      expect(ExampleIA.readyState).toBe(2); // initialising
 
       // initialise to ensure that
       // model is set and db is connected
       // before performing heavy tasks
-      await plugin.initialise(exampleModel);
+      // or you can set max event listeners to 100 to suppress warnings on waits
+      await ExampleIA.initialise();
+
+      expect(ExampleIA.readyState).toBe(1);
 
       const promises = [];
       for (let i = 0; i < 100; i++) {
@@ -405,6 +380,14 @@ describe('MongooseIdAssigner', () => {
   });
 });
 ```
+
+## CONTRIBUTIONS
+If you find a bug, do well to create an [issue](https://github.com/mernxl/mongoose-id-assigner/issues) so we fix things up in a flash.
+Have an awesome new feature to add to library, feel free to open a [PR](https://github.com/mernxl/mongoose-id-assigner/pulls)
+
+### NextIdFunctions (Incrementer)
+If you have a superb nextIdFunction, and you wish it can be added to the list of nextIdFunctions, feel free to drop a 
+pull request and submit your function. 
 
 ## LICENSE
 [MIT](https://github.com/mernxl/mongoose-id-assigner/blob/master/LICENSE.md) 
