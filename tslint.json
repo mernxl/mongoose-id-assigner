@@ -1,10 +1,15 @@
 {
   "defaultSeverity": "error",
+  "rulesDirectory": [
+    "tslint-plugin-prettier"
+  ],
   "extends": [
-    "tslint:recommended"
+    "tslint:recommended",
+    "tslint-config-prettier"
   ],
   "jsRules": {},
   "rules": {
+    "prettier": true,
     "arrow-return-shorthand": true,
     "callable-types": true,
     "class-name": true,
@@ -124,6 +129,5 @@
       "check-separator",
       "check-type"
     ]
-  },
-  "rulesDirectory": []
+  }
 }
