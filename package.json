@@ -36,7 +36,6 @@
   },
   "dependencies": {
     "event-to-promise": "^0.8.0",
-    "npm": "^6.3.0",
     "uuid": ">=3.0.1"
   },
   "peerDependencies": {
