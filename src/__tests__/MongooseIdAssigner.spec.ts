@@ -1,4 +1,4 @@
-import { Binary } from 'bson';
+import { Binary, ObjectID } from 'bson';
 import { Document, Model, Schema, Types } from 'mongoose';
 import { getMongoose } from '../__mocks__/mongoose.config';
 import { getSchema } from '../__mocks__/test.models';
@@ -510,10 +510,13 @@ describe('MongooseIdAssigner', () => {
         characterSchema.plugin(MongooseIdAssigner.plugin, options);
 
         const characterModel = mongoose.model('example12', characterSchema);
+
         const personModel = characterModel.discriminator(
           'Person',
           personSchema,
         );
+
+        droidSchema.path('_id', String);
         const droidModel = characterModel.discriminator('Droid', droidSchema);
 
         try {
@@ -526,7 +529,7 @@ describe('MongooseIdAssigner', () => {
           const droid1 = await droidModel.create({ friends: 'placeholder' });
 
           expect((character as any).someId).toBe(4444);
-          expect(typeof (person as any)._id).toBe('string');
+          expect((person as any)._id).toBeInstanceOf(ObjectID);
           expect((person as any).someId).toBe(4445);
           expect((person as any).license).toBe('786-TSJ-000');
           expect((droid as any)._id).toMatch(/-+/);
@@ -568,10 +571,13 @@ describe('MongooseIdAssigner', () => {
         const characterModel = mongoose.model(modelName, characterSchema);
         const CharacterIA = new MongooseIdAssigner(characterModel, options);
 
+        personSchema.path('_id', String);
         const personModel = characterModel.discriminator(
           modelName + 'Person',
           personSchema,
         );
+
+        droidSchema.path('_id', String);
         const droidModel = characterModel.discriminator(
           modelName + 'Droid',
           droidSchema,
