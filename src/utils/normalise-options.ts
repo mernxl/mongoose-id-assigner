@@ -191,7 +191,7 @@ export function normaliseOptions(
 
   // set default _id field
   if (!normalised.fields.has('_id')) {
-    normalised.fields.set('_id', { type: 'ObjectId' });
+    normalised.fields.set('_id', { type: FieldConfigTypes.ObjectId });
   }
 
   // cannot rely on discriminatorKey as its default __t
