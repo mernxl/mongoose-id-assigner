@@ -39,7 +39,7 @@
     "event-to-promise": "^0.8.0"
   },
   "peerDependencies": {
-    "mongoose": ">=4.3.6 || >=5.0.0"
+    "mongoose": ">=4.3.6 || <4.8.0"
   },
   "optionalDependencies": {
     "uuid": ">=3.0.1"
@@ -65,14 +65,14 @@
     "@types/event-to-promise": "^0.7.0",
     "@types/jest": "^23.3.0",
     "@types/mongodb-memory-server": "^1.8.0",
-    "@types/mongoose": "^5.2.1",
+    "@types/mongoose": "^4.7.45",
     "@types/uuid": "^3.4.3",
     "babel-core": "^6.26.3",
     "babel-jest": "^23.4.2",
     "flow-bin": "^0.77.0",
     "jest": "^23.4.1",
     "mongodb-memory-server": "^1.9.0",
-    "mongoose": "^5.2.5",
+    "mongoose": "4.7.9",
     "prettier": "^1.13.7",
     "rimraf": "^2.6.2",
     "semantic-release": "^15.8.1",
