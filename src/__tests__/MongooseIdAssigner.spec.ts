@@ -1,15 +1,13 @@
-import { Binary, ObjectID } from 'bson';
+import { Binary } from 'bson';
 import { Document, Model, Schema, Types } from 'mongoose';
 import { getMongoose } from '../__mocks__/mongoose.config';
 import { getSchema } from '../__mocks__/test.models';
 import {
-  AssignerOptions,
   AssignerPluginOptions,
   FieldConfigTypes,
 } from '../assigner.interfaces';
 import { localStateStore } from '../LocalStateStore';
 import { MongooseIdAssigner } from '../MongooseIdAssigner';
-import { waitPromise } from '../utils';
 
 const mongoose = getMongoose();
 
@@ -35,17 +33,17 @@ describe('MongooseIdAssigner', () => {
   });
 
   describe('basics', () => {
-    it('should throw error if no model passed at Constructor', () => {
-      expect(() => new MongooseIdAssigner('' as any)).toThrowError(
-        /(Provide a Model to the Constructor)/,
-      );
+    it('should throw error if no schema passed at Constructor', () => {
+      expect(
+        () => new MongooseIdAssigner('' as any, { modelName }),
+      ).toThrowError(/(Schema for the IdAssigner Must be provided!)/);
     });
 
-    it('should throw error if using same model to instantiate IdAssigner', () => {
-      const repeat = mongoose.model('repeat', exampleSchema);
-      expect(new MongooseIdAssigner(repeat)).toBeTruthy();
-      expect(() => new MongooseIdAssigner(repeat)).toThrowError(
-        /(Provided Model already has an Assigner Instance!)/,
+    it('should throw error if no option or modelName passed at Constructor', () => {
+      expect(
+        () => new MongooseIdAssigner(exampleSchema, undefined as any),
+      ).toThrowError(
+        /(Plugin Options must be specified, with schema modelName!)/,
       );
     });
 
@@ -69,29 +67,16 @@ describe('MongooseIdAssigner', () => {
       expect(doc._id).toBeTruthy();
     });
 
-    it('should apply and initialise plugin by calling new MongooseIdAssigner with model', async () => {
-      exampleModel = mongoose.model('example2', exampleSchema);
-
-      const ExampleIA = new MongooseIdAssigner(exampleModel);
-      expect(ExampleIA).toBeInstanceOf(MongooseIdAssigner);
-      // next tick
-      await waitPromise(1);
-      expect(ExampleIA.readyState).toBe(1);
-
-      const doc = await exampleModel.create({ personId: 'mernxl' });
-
-      expect(doc._id).toBeTruthy();
-    });
-
     it('should create noNetwork with UUID and ObjectId', async () => {
-      exampleModel = mongoose.model('example4', exampleSchema);
-
-      const ExampleIA = new MongooseIdAssigner(exampleModel, {
+      const ExampleIA = new MongooseIdAssigner(exampleSchema, {
+        modelName: 'example4',
         fields: {
           _id: FieldConfigTypes.UUID,
           objectIdField: FieldConfigTypes.ObjectId,
         },
       });
+
+      exampleModel = mongoose.model('example4', exampleSchema);
 
       try {
         const doc = await exampleModel.create({ personId: 'mernxl' });
@@ -209,7 +194,8 @@ describe('MongooseIdAssigner', () => {
     });
 
     it('should be robust enough to avoid duplicates', async () => {
-      const options: AssignerOptions = {
+      const options: AssignerPluginOptions = {
+        modelName: 'example8',
         fields: {
           _id: '33333',
           photoId: 44444,
@@ -232,15 +218,16 @@ describe('MongooseIdAssigner', () => {
       };
 
       try {
+        const ExampleIA = new MongooseIdAssigner(exampleSchema, options);
+
         exampleModel = mongoose.model('example8', exampleSchema);
-        const ExampleIA = new MongooseIdAssigner(exampleModel, options);
-        expect(ExampleIA.readyState).toBe(2); // initialising
+        expect(ExampleIA.readyState).toBe(0); // initialising
 
         // initialise to ensure that
         // model is set and db is connected
         // before performing heavy tasks
         // or you can set max event listeners to 100 to suppress warnings on waits
-        await ExampleIA.initialise();
+        await ExampleIA.initialise(exampleModel);
 
         expect(ExampleIA.readyState).toBe(1);
 
@@ -286,9 +273,10 @@ describe('MongooseIdAssigner', () => {
   describe('instance', () => {
     describe('collection', () => {
       it('should return the IdAssigner Collection', async () => {
+        const ExampleIA = new MongooseIdAssigner(exampleSchema, { modelName });
         exampleModel = mongoose.model(modelName, exampleSchema);
-        const ExampleIA = new MongooseIdAssigner(exampleModel);
-        await ExampleIA.initialise();
+
+        await ExampleIA.initialise(exampleModel);
 
         expect(ExampleIA.collection.collectionName).toMatch(
           localStateStore.getCollName(),
@@ -296,23 +284,16 @@ describe('MongooseIdAssigner', () => {
       });
 
       it('should throw error if IdAssigner not Initialise', async () => {
-        const ExampleIA = new MongooseIdAssigner(
-          exampleSchema as any,
-          { modelName } as any,
-          true,
-        );
+        const ExampleIA = new MongooseIdAssigner(exampleSchema, { modelName });
 
         expect(() => ExampleIA.collection).toThrowError(
           /(Cannot read Model, Not Initialised)/,
         );
       });
 
-      it('should throw error if IdAssigner Erred on initialise', async () => {
-        const ExampleIA = new MongooseIdAssigner(
-          exampleSchema as any,
-          { modelName } as any,
-          true,
-        );
+      it('should throw error if IdAssigner Errored on initialise', async () => {
+        const ExampleIA = new MongooseIdAssigner(exampleSchema, { modelName });
+
         ExampleIA.appendState({ error: new Error('I Occurred') });
 
         expect(() => ExampleIA.collection).toThrowError(
@@ -323,8 +304,8 @@ describe('MongooseIdAssigner', () => {
 
     describe('initialise()', () => {
       it('should initialise the plugin without passing model', () => {
-        exampleModel = mongoose.model('example9', exampleSchema);
-        const ExampleIA = new MongooseIdAssigner(exampleModel, {
+        const ExampleIA = new MongooseIdAssigner(exampleSchema, {
+          modelName: 'example9',
           fields: {
             _id: {
               type: FieldConfigTypes.String,
@@ -334,15 +315,17 @@ describe('MongooseIdAssigner', () => {
           },
         });
 
-        return ExampleIA.initialise()
+        exampleModel = mongoose.model('example9', exampleSchema);
+
+        return ExampleIA.initialise(exampleModel)
           .then(state => expect(state).toBe(1))
           .catch(e => expect(e).toBeUndefined());
       });
 
       it('should return state if called multiple times', () => {
         expect.assertions(2);
-        exampleModel = mongoose.model('example10', exampleSchema);
-        const ExampleIA = new MongooseIdAssigner(exampleModel, {
+        const ExampleIA = new MongooseIdAssigner(exampleSchema, {
+          modelName: 'example10',
           fields: {
             _id: {
               type: FieldConfigTypes.String,
@@ -352,11 +335,13 @@ describe('MongooseIdAssigner', () => {
           },
         });
 
+        exampleModel = mongoose.model('example10', exampleSchema);
+
         ExampleIA.initialise(exampleModel)
           .then(state => expect(state).toBe(1))
           .catch(e => expect(e).toBeUndefined());
 
-        return ExampleIA.initialise()
+        return ExampleIA.initialise(exampleModel)
           .then(state => expect(state).toBe(1))
           .catch(e => expect(e).toBeUndefined());
       });
@@ -375,11 +360,7 @@ describe('MongooseIdAssigner', () => {
           },
         };
 
-        const characterIA = new MongooseIdAssigner(
-          characterSchema as any,
-          options,
-          true,
-        );
+        const characterIA = new MongooseIdAssigner(characterSchema, options);
 
         try {
           await characterIA.getNextId('not-found', 'Person13');
@@ -390,14 +371,13 @@ describe('MongooseIdAssigner', () => {
         }
       });
       it('should return nextId depending on fieldConfig', async () => {
-        const options: AssignerOptions = {
+        const exampleIA = new MongooseIdAssigner(exampleSchema, {
+          modelName: 'example14',
           fields: {
             photoId: 4444,
           },
-        };
-
+        });
         const model = mongoose.model('example14', exampleSchema);
-        const exampleIA = new MongooseIdAssigner(model, options);
 
         try {
           await model.create({ photoId: 21 });
@@ -414,13 +394,15 @@ describe('MongooseIdAssigner', () => {
       it('should throw error if no schema passed in', () => {
         expect(() =>
           MongooseIdAssigner.plugin('' as any, {} as any),
-        ).toThrowError(/(Should be called using schema.plugin)/);
+        ).toThrowError(/(Schema for the IdAssigner Must be provided!)/);
       });
 
       it('should throw error if no options passed', () => {
         expect(() =>
           MongooseIdAssigner.plugin(new Schema({}), '' as any),
-        ).toThrowError(/(Plugin Options not specified!)/);
+        ).toThrowError(
+          /(Plugin Options must be specified, with schema modelName!)/,
+        );
       });
 
       it('should apply plugin to schema', async () => {
@@ -447,7 +429,8 @@ describe('MongooseIdAssigner', () => {
       });
 
       it('should create noNetwork discriminators', async () => {
-        const options: AssignerOptions = {
+        const options: AssignerPluginOptions = {
+          modelName: 'example11',
           fields: {
             _id: FieldConfigTypes.GUID,
           },
@@ -461,8 +444,8 @@ describe('MongooseIdAssigner', () => {
           },
         };
 
+        const CharacterIA = new MongooseIdAssigner(characterSchema, options);
         const characterModel = mongoose.model('example11', characterSchema);
-        const CharacterIA = new MongooseIdAssigner(characterModel, options);
         const personModel = characterModel.discriminator(
           'Person1',
           personSchema,
@@ -529,7 +512,7 @@ describe('MongooseIdAssigner', () => {
           const droid1 = await droidModel.create({ friends: 'placeholder' });
 
           expect((character as any).someId).toBe(4444);
-          expect((person as any)._id).toBeInstanceOf(ObjectID);
+          expect(typeof (person as any)._id).toBe('string');
           expect((person as any).someId).toBe(4445);
           expect((person as any).license).toBe('786-TSJ-000');
           expect((droid as any)._id).toMatch(/-+/);
@@ -547,7 +530,8 @@ describe('MongooseIdAssigner', () => {
       });
 
       it('should request and update respective fields, even if configured at base and discriminators', async () => {
-        const options: AssignerOptions = {
+        const options: AssignerPluginOptions = {
+          modelName,
           fields: {
             _id: '786-DEF-000',
             someId: 4444,
@@ -568,8 +552,8 @@ describe('MongooseIdAssigner', () => {
           },
         };
 
+        const CharacterIA = new MongooseIdAssigner(characterSchema, options);
         const characterModel = mongoose.model(modelName, characterSchema);
-        const CharacterIA = new MongooseIdAssigner(characterModel, options);
 
         personSchema.path('_id', String);
         const personModel = characterModel.discriminator(
