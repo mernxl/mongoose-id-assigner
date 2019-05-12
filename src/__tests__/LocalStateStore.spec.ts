@@ -40,16 +40,21 @@ describe('LocalStateStore', () => {
   describe('setCollName()', () => {
     let exampleIA: MongooseIdAssigner;
     let count = 0;
+    let modelName = '';
+
+    beforeEach(() => {
+      modelName = 'Example' + ++count;
+    });
 
     it('should set Assigner collection Name', async () => {
       // at bootstrapping, before any IA initialises
       localStateStore.clear();
       localStateStore.setCollName('newName');
-      const ExampleModel = mongoose.model('Example' + ++count, ExampleSchema);
-      exampleIA = new MongooseIdAssigner(ExampleModel);
+      exampleIA = new MongooseIdAssigner(ExampleSchema, { modelName });
+      const ExampleModel = mongoose.model(modelName, ExampleSchema);
 
       try {
-        await exampleIA.initialise();
+        await exampleIA.initialise(ExampleModel);
         expect(exampleIA.collection.collectionName).toBe('newName');
       } catch (e) {
         expect(e).toBeUndefined();
@@ -58,11 +63,11 @@ describe('LocalStateStore', () => {
 
     it('should throw Error if an Assigner already Initialised', async () => {
       localStateStore.clear();
-      const ExampleModel = mongoose.model('Example' + ++count, ExampleSchema);
-      exampleIA = new MongooseIdAssigner(ExampleModel);
+      exampleIA = new MongooseIdAssigner(ExampleSchema, { modelName });
+      const ExampleModel = mongoose.model(modelName, ExampleSchema);
 
       try {
-        await exampleIA.initialise();
+        await exampleIA.initialise(ExampleModel);
         expect(() => localStateStore.setCollName('newName')).toThrowError(
           /(setCollName)/,
         );
@@ -77,11 +82,9 @@ describe('LocalStateStore', () => {
 
     beforeAll(() => {
       localStateStore.clear();
-      exampleIA = new MongooseIdAssigner(
-        ExampleSchema as any,
-        { modelName: 'example' } as any,
-        true,
-      );
+      exampleIA = new MongooseIdAssigner(ExampleSchema, {
+        modelName: 'example',
+      });
     });
 
     it('should emit events on idAssigner corresponding to idAssigner readyState', async () => {

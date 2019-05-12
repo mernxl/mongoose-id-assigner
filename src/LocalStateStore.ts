@@ -53,6 +53,16 @@ export class LocalStateStore {
     }
   }
 
+  getIdAssigner(schema: Schema) {
+    const state = this.getState(schema);
+
+    if (!state) {
+      throw PluginError(`schema's state not found in store.`);
+    }
+
+    return state.idAssigner;
+  }
+
   clear() {
     this.stateMap.clear();
   }

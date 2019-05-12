@@ -46,35 +46,27 @@ export class MongooseIdAssigner extends EventEmitter {
   public readonly retryMillis: number;
   public readonly options: NormalisedOptions;
 
-  private readonly asPlugin: boolean;
-
-  constructor(model: Model<any>, options?: AssignerOptions, asPlugin = false) {
+  constructor(schema: Schema, options: AssignerPluginOptions) {
     super();
-    if (!asPlugin && (!model || !model.schema || !model.modelName)) {
-      throwPluginError(
-        `Provide a Model to the Constructor, you provided ${model}!`,
+    if (!schema) {
+      throw PluginError('Schema for the IdAssigner Must be provided!');
+    }
+    if (!options || (options && !options.modelName)) {
+      throw PluginError(
+        'Plugin Options must be specified, with schema modelName!',
       );
     }
-    let schema: Schema;
-    let modelName: string;
 
-    if (asPlugin) {
-      modelName = (options as AssignerPluginOptions).modelName;
-      schema = model as any;
-    } else {
-      modelName = model.modelName;
-      schema = model.schema;
-    }
+    const modelName = options.modelName;
 
     if (localStateStore.getState(schema)) {
-      throwPluginError(
-        'Provided Model already has an Assigner Instance!',
+      throw PluginError(
+        'Provided Schema already has an Assigner Instance!',
         modelName,
       );
     }
 
     this.schema = schema;
-    this.asPlugin = asPlugin;
     this.modelName = modelName;
     this.discriminatorKey = schema.get('discriminatorKey');
 
@@ -87,11 +79,8 @@ export class MongooseIdAssigner extends EventEmitter {
       readyState: 0,
       idAssigner: this,
     });
+
     configureSchema(this);
-    if (!asPlugin) {
-      this.appendState({ model });
-      this.initialise().then();
-    }
   }
 
   get readyState() {
@@ -119,14 +108,7 @@ export class MongooseIdAssigner extends EventEmitter {
   }
 
   static plugin(schema: Schema, options: AssignerPluginOptions) {
-    if (!schema) {
-      throwPluginError('Should be called using schema.plugin');
-    }
-    if (!options) {
-      throw throwPluginError('Plugin Options not specified!');
-    }
-    const IA = new MongooseIdAssigner(schema as any, options, true);
-    return !!IA;
+    return new MongooseIdAssigner(schema, options);
   }
 
   refreshOptions(): Promise<void> {
@@ -205,15 +187,11 @@ export class MongooseIdAssigner extends EventEmitter {
     localStateStore.setState(this.schema, { ...this.state, ...state });
   }
 
-  initialise(modelInstance?: Model<Document>): Promise<number> {
+  initialise(modelInstance: Model<Document>): Promise<number> {
     if (this.state.readyState === 0) {
       this.appendState({ readyState: 2 });
 
-      if (!this.asPlugin) {
-        modelInstance = this.state.model;
-      }
-
-      return initialiseOptions(modelInstance as any, this);
+      return initialiseOptions(modelInstance, this);
     }
 
     return this.state.readyState === 1
