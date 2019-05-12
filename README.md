@@ -46,7 +46,7 @@ yarn add uuid
 
 ## Basic Usage
 ### Plugin Options
-TypeName: **AssignerOptions**
+TypeName: **AssignerPluginOptions**
 - `modelName`: **String** Name of the Model your are working with. If discriminators, then provide baseModel Name.
 - `fields`: **AssignerFieldsConfigMap?** The configuration Map of the fields you want the assigner to assign ids to.
   If undefined, then plugin assigns ids to `_id` field, (ObjectId).
@@ -60,6 +60,8 @@ TypeName: **AssignerOptions**
 the last app to init always gives most recent field configs, if the db have a field that is not in the most recent field config, it is auto dropped.
 Therefore always make sure all your micro-service clusters start up with same fieldsConfigs as the last to start rewrites the db and only keeps nextIds.
 
+- Always Setup plugin before creating Mongoose Model for that schema.
+ 
 - Always set FieldConfig Type to reflect schema's path Type, that is if schema Type is `Number`, then use `Number` FieldConfigType. 
 See `ExampleSchema` below with its associated IdAssigners.
 
@@ -105,12 +107,13 @@ console.log(doc._id)   --->   '5b57a1d929239e59b4e3d7f3'     // schema field typ
 console.log(doc.uuidFieldString)   --->   '7729e2e0-8f8b-11e8-882d-2dade78bb893'
 ```
 
-**Method 2**: Using the `MongooseIdAssigner` constructor, it takes in the `Model` instance as first parameter, then options as second, returning IdAssigner Instance. 
-You can now use the IdAssigner instance to request `nextId`s for particular fields.
+**Method 2**: Using the `MongooseIdAssigner` constructor, it takes in the `schema` as first parameter, then options as second, returning IdAssigner Instance. 
+You can now initialise and use the IdAssigner instance to request `nextId`s for particular fields.
 
 Options Type: `AssignerOptions`. 
 ```typescript
-const options: AssignerOptions = {
+const options: AssignerPluginOptions = {
+  modelName: 'ExampleModel',
   fields: {
     _id: {
       type: FieldConfigTypes.String,
@@ -123,14 +126,14 @@ const options: AssignerOptions = {
       asBinary: true,
       versionOptions: {
         rng: (Function) Random # generator function that returns an Array[16] of byte values (0-255) // UUID doc
-      }
-    }
+      },
+    },
   },
 };
 
-const ExampleModel = mongoose.model('ExampleModel', ExampleSchema);
+const ExampleIA = new MongooseIdAssigner(ExampleSchema, options);
 
-const ExampleIA = new MongooseIdAssigner(ExampleModel, options);
+const ExampleModel = mongoose.model('ExampleModel', ExampleSchema);
 
 const doc1 = await ExampleModel.create({name: 'Mongoose'});
     
@@ -168,7 +171,8 @@ const DroidSchema = new mongoose.Schema({
   make: String,
 });
 
-const options: AssignerOptions = {
+const options: AssignerPluginOptions = {
+  modelName: 'example10',
   fields: { 
     someId: 4444,
   },
@@ -188,8 +192,8 @@ const options: AssignerOptions = {
   },
 };
 
+const CharacterIA = new MongooseIdAssigner(characterSchema, options);
 const characterModel = mongoose.model('example10', characterSchema);
-const CharacterIA = new MongooseIdAssigner(characterModel, options);
 
 const personModel = characterModel.discriminator('Person', personSchema);
 const droidModel = characterModel.discriminator('Droid', droidSchema);
@@ -332,7 +336,8 @@ import { AssignerOptions, FieldConfigTypes, localStateStore, MongooseIdAssigner 
 describe('MongooseIdAssigner', () => {
 
   it('should be robust enough to avoid duplicates', async () => {
-    const options: AssignerOptions = {
+    const options: AssignerPluginOptions = {
+      modelName: 'example8',
       fields: {
         _id: '33333',
         photoId: 44444,
@@ -355,15 +360,16 @@ describe('MongooseIdAssigner', () => {
     };
 
     try {
+      const ExampleIA = new MongooseIdAssigner(exampleSchema, options);
+
       exampleModel = mongoose.model('example8', exampleSchema);
-      const ExampleIA = new MongooseIdAssigner(exampleModel, options);
-      expect(ExampleIA.readyState).toBe(2); // initialising
+      expect(ExampleIA.readyState).toBe(0); // initialising
 
       // initialise to ensure that
       // model is set and db is connected
       // before performing heavy tasks
       // or you can set max event listeners to 100 to suppress warnings on waits
-      await ExampleIA.initialise();
+      await ExampleIA.initialise(exampleModel);
 
       expect(ExampleIA.readyState).toBe(1);
 

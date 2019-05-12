@@ -1,7 +1,7 @@
 {
   "name": "mongoose-id-assigner",
   "version": "0.0.0-semantically-released",
-  "description": "A Mongoose Plugin. Easily Manage fields that need an id(unique value) on your mongoose model. This plugin does the work of generating, incrementing, and assigning those values(unique) to those fields.",
+  "description": "A Mongoose Plugin. Automatically assign values to different fields on a document.",
   "author": "mernxl <mernxl@gmail.com>",
   "license": "MIT",
   "repository": "https://github.com/mernxl/mongoose-id-assigner.git",
