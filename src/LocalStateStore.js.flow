@@ -1,6 +1,6 @@
 /* @flow */
 
-import type { MongooseModel, MongooseSchema, Schema } from 'mongoose';
+import type { MongooseModel, MongooseSchema } from 'mongoose';
 import { MongooseIdAssigner } from './MongooseIdAssigner';
 
 export type SchemaState = {
@@ -18,7 +18,7 @@ declare export class LocalStateStore {
   constructor(): this;
   getState(schema: MongooseSchema<any>): SchemaState;
   setState(schema: MongooseSchema<any>, state: SchemaState): void;
-  getIdAssigner(schema: Schema): MongooseIdAssigner;
+  getIdAssigner(schema: MongooseSchema<any>): MongooseIdAssigner;
   clear(): void;
 
   /**
