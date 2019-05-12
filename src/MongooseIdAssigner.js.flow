@@ -1,13 +1,8 @@
 /* @flow */
 
-import type { ObjectId } from 'mongoose';
 import EventEmitter from 'events';
-import type { MongooseSchema, MongooseModel } from 'mongoose';
-import type {
-  AssignerOptions,
-  AssignerPluginOptions,
-  FieldConfig,
-} from './assigner.interfaces';
+import type { MongooseModel, MongooseSchema, ObjectId } from 'mongoose';
+import type { AssignerPluginOptions, FieldConfig } from './assigner.interfaces';
 import type { SchemaState } from './LocalStateStore';
 
 export interface NormalisedOptions {
@@ -33,7 +28,7 @@ declare export class MongooseIdAssigner extends EventEmitter {
   retryMillis: number;
   options: NormalisedOptions;
   readyState: number;
-  constructor(model: MongooseModel<any>, options?: AssignerOptions): this;
+  constructor(schema: MongooseSchema<any>, options?: AssignerPluginOptions): this;
   state: SchemaState;
   collection: any;
   static plugin(
@@ -48,15 +43,14 @@ declare export class MongooseIdAssigner extends EventEmitter {
   getNextId(
     field: string,
     discriminator?: string,
-  ): Promise<
-    | void
+  ): Promise<| void
     | ObjectId
     | Buffer
     | string
     | number
     | Promise<number>
     | Promise<string>,
-  >;
+    >;
   appendState(state: $Shape<SchemaState>): void;
   initialise(modelInstance: MongooseModel): Promise<number>;
 }
