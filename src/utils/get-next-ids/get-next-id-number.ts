@@ -1,6 +1,6 @@
 import { NumberFieldConfig } from '../../assigner.interfaces';
 import { MongooseIdAssigner } from '../../MongooseIdAssigner';
-import { throwPluginError, waitPromise } from '../index';
+import { PluginError, waitPromise } from '../index';
 
 export async function getNextIdNumber(
   field: string,
@@ -53,10 +53,12 @@ export async function getNextIdNumber(
         ++retries,
       );
     } else if (!update.value && retries > idAssigner.retryTime) {
-      throwPluginError(
-        `Maximum retryTime to set value attained!`,
-        idAssigner.modelName,
-        field,
+      return Promise.reject(
+        PluginError(
+          `Maximum retryTime to set value attained!`,
+          idAssigner.modelName,
+          field,
+        ),
       );
     }
   } catch (e) {

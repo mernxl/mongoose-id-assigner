@@ -1,6 +1,6 @@
 import { Document, Model, Schema } from 'mongoose';
 import { MongooseIdAssigner } from './MongooseIdAssigner';
-import { throwPluginError } from './utils';
+import { PluginError } from './utils';
 
 export interface SchemaState {
   modelName: string;
@@ -74,7 +74,7 @@ export class LocalStateStore {
   setCollName(collName: string) {
     for (const config of this.stateMap.values()) {
       if (config.readyState === 1 || config.readyState === 2) {
-        throwPluginError(
+        throw PluginError(
           'Could not Set CollName as Some Assigners have initialised, Call setCollName at app bootstrap level.',
         );
       }
