@@ -1,7 +1,7 @@
 import { Document } from 'mongoose';
 import { MongooseIdAssigner } from '../MongooseIdAssigner';
 import { assignIdNetwork, assignIdNoNetwork } from './assign-fields-ids';
-import { throwPluginError } from './others';
+import { PluginError } from './others';
 
 function configureIndexes(assignId: MongooseIdAssigner) {
   const schema = assignId.schema;
@@ -33,7 +33,7 @@ function configurePreSave(assigner: MongooseIdAssigner) {
       if (doc.isNew) {
         if (assigner.state.error) {
           return Promise.reject(
-            throwPluginError(
+            PluginError(
               `Cannot assign field ids, Error on Init. [${
                 assigner.state.error
               }]`,

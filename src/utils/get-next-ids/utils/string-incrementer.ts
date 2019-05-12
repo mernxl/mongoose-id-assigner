@@ -1,4 +1,4 @@
-import { throwPluginError } from '../../others';
+import { PluginError } from '../../others';
 
 /**
  * Increments a given id from nextId
@@ -30,7 +30,7 @@ export function stringIncrementer(nextId: string, separator = '-'): string {
   let digits = nextId.substr(firstDash + 1) as any;
 
   if (isNaN(digits++)) {
-    throwPluginError(
+    throw PluginError(
       `Wrong nextId format, must end with number from separator. ` +
         `e.g separator: - nextIds => 9434034, 4dc34-34, IBSN-093JDS-number. ` +
         `Could not increment from nextId: ${nextId}, separator: : (${separator})`,

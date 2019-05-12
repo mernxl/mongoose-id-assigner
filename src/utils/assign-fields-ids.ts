@@ -8,7 +8,7 @@ import {
   getNextIdUUID,
 } from './get-next-ids';
 import { checkAndUpdateOptions } from './initialise-options';
-import { throwPluginError, waitPromise } from './others';
+import { PluginError, waitPromise } from './others';
 import { isNumber, isObjectId, isString, isUUID } from './type-guards';
 
 export async function refreshOptions(
@@ -27,15 +27,19 @@ export async function refreshOptions(
         await waitPromise(10 * retries); // wait and retry
         return refreshOptions(assigner, ++retries);
       }
-      throwPluginError(
-        'Stored Options not Found for Ready Model!',
-        assigner.modelName,
+      return Promise.reject(
+        PluginError(
+          'Stored Options not Found for Ready Model!',
+          assigner.modelName,
+        ),
       );
     }
 
     // todo Handle this case
     if (!freshOptions) {
-      throwPluginError('AssignId unexpectedly not Ready', assigner.modelName);
+      return Promise.reject(
+        PluginError('AssignId unexpectedly not Ready', assigner.modelName),
+      );
     }
 
     checkAndUpdateOptions(assigner.options, freshOptions as any);

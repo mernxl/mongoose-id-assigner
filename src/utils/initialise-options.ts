@@ -3,7 +3,7 @@ import { Document, Model } from 'mongoose';
 import { FieldConfig } from '../assigner.interfaces';
 import { localStateStore } from '../LocalStateStore';
 import { MongooseIdAssigner, NormalisedOptions } from '../MongooseIdAssigner';
-import { throwPluginError, waitPromise } from './others';
+import { PluginError, waitPromise } from './others';
 import { isNumber, isString } from './type-guards';
 
 interface OptionsCheckResults {
@@ -151,9 +151,11 @@ async function refreshDBOptions(
       // new options requests deletion of old options
       // but those options have been updated by another process
       if (!update || !update.ok) {
-        throwPluginError(
-          'Error at initialisation, cannot delete old options, Still in use!',
-          idAssigner.modelName,
+        return Promise.reject(
+          PluginError(
+            'Error at initialisation, cannot delete old options, Still in use!',
+            idAssigner.modelName,
+          ),
         );
       }
     }
@@ -165,13 +167,14 @@ async function refreshDBOptions(
       });
       return 1;
     } else {
-      throwPluginError(`Initialisation error ${update}`, idAssigner.modelName);
-      return 3;
+      return Promise.reject(
+        PluginError(`Initialisation error ${update}`, idAssigner.modelName),
+      );
     }
   } catch (e) {
     if (e.code === 11000) {
       if (retries > 30) {
-        throwPluginError(
+        throw PluginError(
           'Initialisation error, maximum retries attained',
           idAssigner.modelName,
         );
@@ -246,9 +249,8 @@ export async function initialiseOptions(
       return Promise.reject(e);
     }
   } else {
-    throwPluginError(
+    throw PluginError(
       'Initialisation failed, cannot establish db connection not established!',
     );
-    return 0;
   }
 }

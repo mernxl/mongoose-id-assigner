@@ -10,7 +10,7 @@ import {
   NumberFieldConfig,
 } from './assigner.interfaces';
 import { localStateStore, SchemaState } from './LocalStateStore';
-import { initialiseOptions, normaliseOptions, throwPluginError } from './utils';
+import { initialiseOptions, normaliseOptions, PluginError } from './utils';
 import { refreshOptions } from './utils/assign-fields-ids';
 import { configureSchema } from './utils/configure-schema';
 import {
@@ -106,9 +106,11 @@ export class MongooseIdAssigner extends EventEmitter {
     const { model, error } = this.state;
     if (!model) {
       if (error) {
-        throwPluginError('Cannot read Model, Error At Initialisation ' + error);
+        throw PluginError(
+          'Cannot read Model, Error At Initialisation ' + error,
+        );
       } else {
-        throwPluginError('Cannot read Model, Not Initialised');
+        throw PluginError('Cannot read Model, Not Initialised');
       }
     }
     return (model as Model<Document>).db.collection(
@@ -171,7 +173,7 @@ export class MongooseIdAssigner extends EventEmitter {
     const fieldConfig = this.getFieldConfig(field, discriminator);
 
     if (!fieldConfig) {
-      return throwPluginError(
+      throw PluginError(
         `Requested Field, [${field}] does not have a Field Configuration!`,
         this.modelName,
       );

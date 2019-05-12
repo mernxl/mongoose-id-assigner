@@ -6,7 +6,7 @@ import {
   StringFieldConfig,
 } from '../assigner.interfaces';
 import { NormalisedOptions } from '../MongooseIdAssigner';
-import { throwPluginError } from './others';
+import { PluginError } from './others';
 import { isNumber, isObjectId, isString, isUUID } from './type-guards';
 
 function checkFieldConfig(
@@ -25,7 +25,11 @@ function checkFieldConfig(
     config.asBinary = !!config.asBinary;
 
     if (!(config.version === 4 || config.version === 1)) {
-      throwPluginError(`UUID version must be either 1 or 4!`, modelName, field);
+      throw PluginError(
+        `UUID version must be either 1 or 4!`,
+        modelName,
+        field,
+      );
     }
     return false;
   }
@@ -34,7 +38,7 @@ function checkFieldConfig(
     !(config as any).nextId ||
     typeof (config as any).nextId !== config.type.toLowerCase()
   ) {
-    throwPluginError(
+    throw PluginError(
       'nextId is required, should have as type ' + config.type,
       modelName,
       field,
@@ -45,12 +49,12 @@ function checkFieldConfig(
     (config as StringFieldConfig).nextIdFunction &&
     typeof (config as StringFieldConfig).nextIdFunction !== 'function'
   ) {
-    throwPluginError('nextIdFunction must be a `Function`!', modelName, field);
+    throw PluginError('nextIdFunction must be a `Function`!', modelName, field);
   }
 
   if (isNumber(config)) {
     if (config.incrementBy && typeof config.incrementBy !== 'number') {
-      throwPluginError(
+      throw PluginError(
         'incrementBy must be of type `number`!',
         modelName,
         field,
@@ -61,7 +65,7 @@ function checkFieldConfig(
       typeof config.nextIdFunction(config.nextId, config.incrementBy) !==
         'number'
     ) {
-      throwPluginError(
+      throw PluginError(
         'nextIdFunction must return nextId of type `number`!',
         modelName,
         field,
@@ -72,7 +76,7 @@ function checkFieldConfig(
 
   if (isString(config) && config.nextIdFunction) {
     if (typeof config.nextIdFunction(config.nextId) !== 'string') {
-      throwPluginError(
+      throw PluginError(
         'nextIdFunction must return nextId of type `string`!',
         modelName,
         field,
@@ -131,7 +135,7 @@ function normaliseFieldsConfigMap(
 
           default:
             // Number and String
-            throwPluginError(
+            throw PluginError(
               `nextId not provided for field type ${fieldConfig}!`,
               modelName,
               field,
@@ -149,7 +153,7 @@ function normaliseFieldsConfigMap(
       (fieldConfig && typeof fieldConfig !== 'object') ||
       !FieldConfigTypes[fieldConfig.type]
     ) {
-      throwPluginError(
+      throw PluginError(
         `Unknown FieldConfigType ${fieldConfig}`,
         modelName,
         field,
@@ -174,7 +178,7 @@ export function normaliseOptions(
   options?: AssignerOptions,
 ): NormalisedOptions {
   if (!modelName) {
-    throw throwPluginError('Plugin `modelName` must be defined!');
+    throw PluginError('Plugin `modelName` must be defined!');
   }
 
   const normalised: NormalisedOptions = {
