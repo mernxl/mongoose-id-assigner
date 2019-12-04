@@ -1,7 +1,14 @@
-import MongodbMemoryServer from 'mongodb-memory-server';
+import { MongoMemoryServer } from 'mongodb-memory-server-global';
+import { ConnectionOptions } from 'mongoose';
 import * as mongoose from 'mongoose';
 
-(mongoose as any).Promise = Promise;
+const mongooseOptions: ConnectionOptions = {
+  promiseLibrary: Promise,
+  autoReconnect: true,
+  reconnectTries: Number.MAX_VALUE,
+  reconnectInterval: 1000,
+  useNewUrlParser: true,
+};
 
 const IN_MEM = !!process.env.IN_MEM;
 
@@ -9,15 +16,9 @@ export function getMongoose() {
   if (IN_MEM) {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
-    const originalConnect = mongoose.connect;
-    (mongoose as any).connect = async () => {
-      const mongoServer = new MongodbMemoryServer();
+    const mongoServer = new MongoMemoryServer();
 
-      const mongoUri = await mongoServer.getConnectionString(true);
-
-      // originalConnect.bind(mongoose)(mongoUri, { useMongoClient: true }); // mongoose 4
-      originalConnect.bind(mongoose)(mongoUri, { useNewUrlParser: true }); // mongoose 5
-
+    mongoServer.getConnectionString().then(async mongoUri => {
       mongoose.connection.on('error', e => {
         if (e.message.code === 'ETIMEDOUT') {
           console.error(e);
@@ -27,22 +28,23 @@ export function getMongoose() {
       });
 
       mongoose.connection.once('open', () => {
-        // console.log(`MongoDB successfully connected to ${mongoUri}`);
+        console.log(`MongoDB successfully connected to ${mongoUri}`);
       });
 
-      mongoose.connection.once('disconnected', () => {
-        // console.log('MongoDB disconnected!');
-        mongoServer.stop();
-      });
-    };
-    (mongoose as any).connect();
+      mongoose.connection.once('disconnected', () => mongoServer.stop());
+
+      await mongoose.connect(
+        mongoUri,
+        mongooseOptions,
+      );
+    });
 
     return mongoose;
   } else {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
     mongoose.connect(
       'mongodb://localhost:27017/demoDB',
-      { useNewUrlParser: true },
+      mongooseOptions,
     );
 
     return mongoose;
