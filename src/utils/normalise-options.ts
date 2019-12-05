@@ -53,7 +53,7 @@ function checkFieldConfig(
   }
 
   if (isNumber(config)) {
-    if (config.incrementBy && typeof config.incrementBy !== 'number') {
+    if (config.incrementBy) {
       throw PluginError(
         'incrementBy must be of type `number`!',
         modelName,
@@ -123,7 +123,7 @@ function normaliseFieldsConfigMap(
     }
 
     if (typeof fieldConfig === 'string') {
-      if (FieldConfigTypes[fieldConfig as any]) {
+      if ((FieldConfigTypes as any)[fieldConfig]) {
         switch (fieldConfig) {
           case FieldConfigTypes.ObjectId:
             fieldConfig = { type: FieldConfigTypes.ObjectId };

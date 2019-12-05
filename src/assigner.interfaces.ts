@@ -50,7 +50,8 @@ export type FieldConfig = {
   | DefaultFieldConfig
   | StringFieldConfig
   | NumberFieldConfig
-  | UUIDFieldConfig);
+  | UUIDFieldConfig
+);
 
 /**
  * fieldConfig = string, then nextId = string, default incrementer,
