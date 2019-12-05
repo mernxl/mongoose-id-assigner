@@ -80,10 +80,7 @@ export function checkAndUpdateOptions(
 
   const rObject = { replace: true, options };
 
-  rObject.replace = checkAndUpdateFieldConfigMap(
-    options.fields,
-    freshOptions.fields,
-  );
+  rObject.replace = checkAndUpdateFieldConfigMap(options.fields, freshOptions.fields);
 
   // if discriminator options available
   if (options.discriminators) {
@@ -128,25 +125,21 @@ async function refreshDBOptions(
     let update;
 
     if (mergedOptions.replace) {
-      update = await mongooseModel.db
-        .collection(localStateStore.getCollName())
-        .findOneAndReplace(
-          {
-            modelName: idAssigner.modelName,
-            timestamp: mergedOptions.options.timestamp,
-          },
-          mergedOptions.options,
-          {
-            upsert: true,
-          },
-        );
-    } else if (mergedOptions.delete) {
-      update = await mongooseModel.db
-        .collection(localStateStore.getCollName())
-        .findOneAndDelete({
+      update = await mongooseModel.db.collection(localStateStore.getCollName()).findOneAndReplace(
+        {
           modelName: idAssigner.modelName,
           timestamp: mergedOptions.options.timestamp,
-        });
+        },
+        mergedOptions.options,
+        {
+          upsert: true,
+        },
+      );
+    } else if (mergedOptions.delete) {
+      update = await mongooseModel.db.collection(localStateStore.getCollName()).findOneAndDelete({
+        modelName: idAssigner.modelName,
+        timestamp: mergedOptions.options.timestamp,
+      });
 
       // new options requests deletion of old options
       // but those options have been updated by another process
@@ -167,17 +160,12 @@ async function refreshDBOptions(
       });
       return 1;
     } else {
-      return Promise.reject(
-        PluginError(`Initialisation error ${update}`, idAssigner.modelName),
-      );
+      return Promise.reject(PluginError(`Initialisation error ${update}`, idAssigner.modelName));
     }
   } catch (e) {
     if (e.code === 11000) {
       if (retries > 30) {
-        throw PluginError(
-          'Initialisation error, maximum retries attained',
-          idAssigner.modelName,
-        );
+        throw PluginError('Initialisation error, maximum retries attained', idAssigner.modelName);
       }
       return refreshDBOptions(mongooseModel, idAssigner, ++retries);
     }
@@ -191,12 +179,10 @@ async function dbInitialiseLogic(
 ): Promise<number> {
   try {
     // create index, ensures no duplicates during upserts
-    await mongooseModel.db
-      .collection(localStateStore.getCollName())
-      .createIndex('modelName', {
-        unique: true,
-        background: false,
-      });
+    await mongooseModel.db.collection(localStateStore.getCollName()).createIndex('modelName', {
+      unique: true,
+      background: false,
+    });
 
     return await refreshDBOptions(mongooseModel, idAssigner);
   } catch (e) {
@@ -240,17 +226,13 @@ export async function initialiseOptions(
     try {
       // 3 - disconnecting, wait more
       // 0 - disconnected, wait less as connection can be back anytime.
-      await waitPromise(
-        (mongooseModel.db.readyState === 3 ? 500 : 100) * retries,
-      );
+      await waitPromise((mongooseModel.db.readyState === 3 ? 500 : 100) * retries);
 
       return initialiseOptions(mongooseModel, idAssigner, ++retries);
     } catch (e) {
       return Promise.reject(e);
     }
   } else {
-    throw PluginError(
-      'Initialisation failed, cannot establish db connection not established!',
-    );
+    throw PluginError('Initialisation failed, cannot establish db connection not established!');
   }
 }

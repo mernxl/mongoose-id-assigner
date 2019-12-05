@@ -9,11 +9,7 @@ import { NormalisedOptions } from '../MongooseIdAssigner';
 import { PluginError } from './others';
 import { isNumber, isObjectId, isString, isUUID } from './type-guards';
 
-function checkFieldConfig(
-  modelName: string,
-  field: string,
-  config: FieldConfig,
-): boolean {
+function checkFieldConfig(modelName: string, field: string, config: FieldConfig): boolean {
   if (isObjectId(config)) {
     return false;
   }
@@ -25,24 +21,13 @@ function checkFieldConfig(
     config.asBinary = !!config.asBinary;
 
     if (!(config.version === 4 || config.version === 1)) {
-      throw PluginError(
-        `UUID version must be either 1 or 4!`,
-        modelName,
-        field,
-      );
+      throw PluginError(`UUID version must be either 1 or 4!`, modelName, field);
     }
     return false;
   }
 
-  if (
-    !(config as any).nextId ||
-    typeof (config as any).nextId !== config.type.toLowerCase()
-  ) {
-    throw PluginError(
-      'nextId is required, should have as type ' + config.type,
-      modelName,
-      field,
-    );
+  if (!(config as any).nextId || typeof (config as any).nextId !== config.type.toLowerCase()) {
+    throw PluginError('nextId is required, should have as type ' + config.type, modelName, field);
   }
 
   if (
@@ -54,33 +39,20 @@ function checkFieldConfig(
 
   if (isNumber(config)) {
     if (config.incrementBy) {
-      throw PluginError(
-        'incrementBy must be of type `number`!',
-        modelName,
-        field,
-      );
+      throw PluginError('incrementBy must be of type `number`!', modelName, field);
     }
     if (
       config.nextIdFunction &&
-      typeof config.nextIdFunction(config.nextId, config.incrementBy) !==
-        'number'
+      typeof config.nextIdFunction(config.nextId, config.incrementBy) !== 'number'
     ) {
-      throw PluginError(
-        'nextIdFunction must return nextId of type `number`!',
-        modelName,
-        field,
-      );
+      throw PluginError('nextIdFunction must return nextId of type `number`!', modelName, field);
     }
     return true;
   }
 
   if (isString(config) && config.nextIdFunction) {
     if (typeof config.nextIdFunction(config.nextId) !== 'string') {
-      throw PluginError(
-        'nextIdFunction must return nextId of type `string`!',
-        modelName,
-        field,
-      );
+      throw PluginError('nextIdFunction must return nextId of type `string`!', modelName, field);
     }
     return true;
   }
@@ -153,11 +125,7 @@ function normaliseFieldsConfigMap(
       (fieldConfig && typeof fieldConfig !== 'object') ||
       !FieldConfigTypes[fieldConfig.type]
     ) {
-      throw PluginError(
-        `Unknown FieldConfigType ${fieldConfig}`,
-        modelName,
-        field,
-      );
+      throw PluginError(`Unknown FieldConfigType ${fieldConfig}`, modelName, field);
     }
 
     if (fieldConfig && typeof fieldConfig === 'object') {
@@ -173,25 +141,17 @@ function normaliseFieldsConfigMap(
   return rObject;
 }
 
-export function normaliseOptions(
-  modelName: string,
-  options?: AssignerOptions,
-): NormalisedOptions {
+export function normaliseOptions(modelName: string, options?: AssignerOptions): NormalisedOptions {
   if (!modelName) {
     throw PluginError('Plugin `modelName` must be defined!');
   }
 
   const normalised: NormalisedOptions = {
     modelName,
-    ...normaliseFieldsConfigMap(
-      modelName,
-      options ? options.fields : undefined,
-    ),
+    ...normaliseFieldsConfigMap(modelName, options ? options.fields : undefined),
   };
 
-  normalised.fields = normalised.fields
-    ? normalised.fields
-    : new Map<string, FieldConfig>();
+  normalised.fields = normalised.fields ? normalised.fields : new Map<string, FieldConfig>();
 
   // set default _id field
   if (!normalised.fields.has('_id')) {
@@ -206,12 +166,8 @@ export function normaliseOptions(
         continue;
       }
 
-      const discriminator: AssignerFieldsConfigMap =
-        options.discriminators[dName];
-      const rObjectDNormalisedFields = normaliseFieldsConfigMap(
-        dName,
-        discriminator,
-      );
+      const discriminator: AssignerFieldsConfigMap = options.discriminators[dName];
+      const rObjectDNormalisedFields = normaliseFieldsConfigMap(dName, discriminator);
 
       if (!rObjectDNormalisedFields.fields) {
         continue;

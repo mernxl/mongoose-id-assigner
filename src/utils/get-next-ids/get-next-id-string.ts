@@ -45,20 +45,10 @@ export async function getNextIdString(
       const multiplier = Math.abs(Math.random() * retries);
       await waitPromise(idAssigner.retryMillis * multiplier);
       await idAssigner.refreshOptions();
-      return getNextIdString(
-        field,
-        idAssigner,
-        fieldConfig,
-        discriminatorName,
-        ++retries,
-      );
+      return getNextIdString(field, idAssigner, fieldConfig, discriminatorName, ++retries);
     } else if (!update.value && retries > idAssigner.retryTime) {
       return Promise.reject(
-        PluginError(
-          `Maximum retryTime to set value attained!`,
-          idAssigner.modelName,
-          field,
-        ),
+        PluginError(`Maximum retryTime to set value attained!`, idAssigner.modelName, field),
       );
     }
   } catch (e) {
