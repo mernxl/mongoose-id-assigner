@@ -1,4 +1,5 @@
 sudo: false
+dist: xenial
 language: node_js
 cache:
   yarn: true
