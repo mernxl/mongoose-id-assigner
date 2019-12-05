@@ -1,13 +1,10 @@
 import { MongoMemoryServer } from 'mongodb-memory-server-global';
 import * as mongoose from 'mongoose';
-import { ConnectionOptions } from 'mongoose';
 
-const mongooseOptions: ConnectionOptions = {
+const mongooseOptions = {
   promiseLibrary: Promise,
-  autoReconnect: true,
-  reconnectTries: Number.MAX_VALUE,
-  reconnectInterval: 1000,
   useNewUrlParser: true,
+  useUnifiedTopology: true,
 };
 
 const IN_MEM = !!process.env.IN_MEM;
