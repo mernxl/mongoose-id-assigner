@@ -1,50 +1,56 @@
-import MongodbMemoryServer from 'mongodb-memory-server';
+import { MongoMemoryServer } from 'mongodb-memory-server-global';
 import * as mongoose from 'mongoose';
+import uuid = require('uuid');
 
-(mongoose as any).Promise = Promise;
+const mongooseOptions = {
+  promiseLibrary: Promise,
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+};
 
 const IN_MEM = !!process.env.IN_MEM;
+const MONGOMS_VERSION = process.env.MONGOMS_VERSION;
 
-export function getMongoose() {
+export async function getMongoose() {
   if (IN_MEM) {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
-    const originalConnect = mongoose.connect;
-    (mongoose as any).connect = async () => {
-      const mongoServer = new MongodbMemoryServer();
+    const mongoServer = new MongoMemoryServer();
 
-      const mongoUri = await mongoServer.getConnectionString(true);
+    const mongoUri = await mongoServer.getConnectionString();
 
-      // originalConnect.bind(mongoose)(mongoUri, { useMongoClient: true }); // mongoose 4
-      originalConnect.bind(mongoose)(mongoUri, { useNewUrlParser: true }); // mongoose 5
+    const connection = mongoose.createConnection();
 
-      mongoose.connection.on('error', e => {
-        if (e.message.code === 'ETIMEDOUT') {
-          console.error(e);
-        } else {
-          throw e;
-        }
-      });
+    connection.on('error', e => {
+      if (e.message.code === 'ETIMEDOUT') {
+        console.error(e);
+      } else {
+        throw e;
+      }
+    });
 
-      mongoose.connection.once('open', () => {
-        // console.log(`MongoDB successfully connected to ${mongoUri}`);
-      });
+    connection.once('open', () => {
+      console.log(`MongoDB successfully connected to ${mongoUri}, ${MONGOMS_VERSION}`);
+    });
 
-      mongoose.connection.once('disconnected', () => {
-        // console.log('MongoDB disconnected!');
-        mongoServer.stop();
-      });
-    };
-    (mongoose as any).connect();
+    connection.once('close', () => mongoServer.stop());
 
-    return mongoose;
+    await connection.openUri(mongoUri, mongooseOptions);
+
+    return connection;
   } else {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
-    mongoose.connect(
-      'mongodb://localhost:27017/demoDB',
-      { useNewUrlParser: true },
-    );
 
-    return mongoose;
+    const connection = mongoose.createConnection();
+
+    connection.once('open', () => {
+      console.log(`MongoDB successfully connected local`);
+    });
+
+    connection.once('close', () => console.log('Closed'));
+
+    await connection.openUri(`mongodb://localhost:27017/__${uuid()}__`, mongooseOptions);
+
+    return connection;
   }
 }

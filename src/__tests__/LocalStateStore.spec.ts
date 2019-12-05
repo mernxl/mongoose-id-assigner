@@ -1,24 +1,25 @@
+import { Connection } from 'mongoose';
 import { getMongoose } from '../__mocks__/mongoose.config';
 import { getSchema } from '../__mocks__/test.models';
-import {
-  LocalStateStore,
-  localStateStore,
-  SchemaState,
-} from '../LocalStateStore';
+import { LocalStateStore, localStateStore, SchemaState } from '../LocalStateStore';
 import { MongooseIdAssigner } from '../MongooseIdAssigner';
 
-const mongoose = getMongoose();
 const ExampleSchema = getSchema(0);
+let connection: Connection;
 
-afterAll(async () => {
-  await mongoose.disconnect();
+beforeAll(async () => {
+  connection = await getMongoose();
 });
 
-afterEach(async () => {
-  await mongoose.connection.dropDatabase();
+afterAll(async () => {
+  await connection.close();
 });
 
 describe('LocalStateStore', () => {
+  afterEach(async () => {
+    await connection.dropDatabase();
+  });
+
   describe('basics', () => {
     it('should be a singleton class', () => {
       expect(new LocalStateStore()).toEqual(localStateStore);
@@ -51,7 +52,7 @@ describe('LocalStateStore', () => {
       localStateStore.clear();
       localStateStore.setCollName('newName');
       exampleIA = new MongooseIdAssigner(ExampleSchema, { modelName });
-      const ExampleModel = mongoose.model(modelName, ExampleSchema);
+      const ExampleModel = connection.model(modelName, ExampleSchema);
 
       try {
         await exampleIA.initialise(ExampleModel);
@@ -64,13 +65,11 @@ describe('LocalStateStore', () => {
     it('should throw Error if an Assigner already Initialised', async () => {
       localStateStore.clear();
       exampleIA = new MongooseIdAssigner(ExampleSchema, { modelName });
-      const ExampleModel = mongoose.model(modelName, ExampleSchema);
+      const ExampleModel = connection.model(modelName, ExampleSchema);
 
       try {
         await exampleIA.initialise(ExampleModel);
-        expect(() => localStateStore.setCollName('newName')).toThrowError(
-          /(setCollName)/,
-        );
+        expect(() => localStateStore.setCollName('newName')).toThrowError(/(setCollName)/);
       } catch (e) {
         expect(e).toBeUndefined();
       }

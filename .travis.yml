@@ -1,20 +1,22 @@
 sudo: false
+dist: xenial
 language: node_js
 cache:
   yarn: true
   directories:
     - node_modules
-    - $HOME/.mongodb-binaries
+    - $HOME/.cache
 notifications:
   email: true
 node_js:
-  - "9"
+  - "12"
+  - "10"
   - "8"
 env:
   global:
     - TEST_SITE=travis-ci
 script:
-  - yarn run test
+  - yarn run test-ci
   - yarn run build
 after_success:
   - 'curl -Lo travis_after_all.py https://git.io/travis_after_all'

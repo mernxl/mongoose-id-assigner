@@ -33,24 +33,25 @@ export interface UUIDFieldConfig {
 
 /**
  *
- * @property {Boolean} noSpace - noSpace, insure we consume all possible values, i.e. we must have 1, 2, 3, 4
- * order doesn't matter but all those keys must be present, no 1, 3, 4, 6.
- * If noSpace is true, then on holdTimeout, that nextId will be use on any newly saving doc, else nextId discarded
+ * @property {Boolean} noSpace - noSpace, insure we consume all possible values, i.e. we
+ * must have 1, 2, 3, 4 order doesn't matter but all those keys must be present, no 1, 3, 4, 6.
+ * If noSpace is true, then on holdTimeout, that nextId will be use on any newly
+ * saving doc, else nextId discarded
  *
- * @property {Number} maxHold[50] - As there may be performance issues when holding ids, maxHold will be set,
- * @property {String} holdTimeout - default timeout string, must be parse-able to number by `ms` plugin
- * @property {Number} holdTimeout - default timeout millis, gotten id stays onHold for this length of time
- * @property {Boolean} holdTimeout - if true, will always getNextId with default timeout of `1 week` else use getOnly on getNextIds
+ * @property {Number} maxHold[50] - As there may be performance issues when holding ids, maxHold
+ * will be set,
+ * @property {String} holdTimeout - default timeout string, must be parse-able to number
+ * by `ms` plugin
+ * @property {Number} holdTimeout - default timeout millis, gotten id stays onHold for
+ * this length of time
+ * @property {Boolean} holdTimeout - if true, will always getNextId with default
+ * timeout of `1 week` else use getOnly on getNextIds
  */
 export type FieldConfig = {
   index?: boolean;
   unique?: boolean;
   noSpace?: boolean;
-} & (
-  | DefaultFieldConfig
-  | StringFieldConfig
-  | NumberFieldConfig
-  | UUIDFieldConfig);
+} & (DefaultFieldConfig | StringFieldConfig | NumberFieldConfig | UUIDFieldConfig);
 
 /**
  * fieldConfig = string, then nextId = string, default incrementer,

@@ -13,11 +13,7 @@ import { localStateStore, SchemaState } from './LocalStateStore';
 import { initialiseOptions, normaliseOptions, PluginError } from './utils';
 import { refreshOptions } from './utils/assign-fields-ids';
 import { configureSchema } from './utils/configure-schema';
-import {
-  getNextIdNumber,
-  getNextIdString,
-  getNextIdUUID,
-} from './utils/get-next-ids';
+import { getNextIdNumber, getNextIdString, getNextIdUUID } from './utils/get-next-ids';
 
 /**
  * Options stored in db, plus modelName
@@ -52,18 +48,13 @@ export class MongooseIdAssigner extends EventEmitter {
       throw PluginError('Schema for the IdAssigner Must be provided!');
     }
     if (!options || (options && !options.modelName)) {
-      throw PluginError(
-        'Plugin Options must be specified, with schema modelName!',
-      );
+      throw PluginError('Plugin Options must be specified, with schema modelName!');
     }
 
     const modelName = options.modelName;
 
     if (localStateStore.getState(schema)) {
-      throw PluginError(
-        'Provided Schema already has an Assigner Instance!',
-        modelName,
-      );
+      throw PluginError('Provided Schema already has an Assigner Instance!', modelName);
     }
 
     this.schema = schema;
@@ -95,16 +86,12 @@ export class MongooseIdAssigner extends EventEmitter {
     const { model, error } = this.state;
     if (!model) {
       if (error) {
-        throw PluginError(
-          'Cannot read Model, Error At Initialisation ' + error,
-        );
+        throw PluginError('Cannot read Model, Error At Initialisation ' + error);
       } else {
         throw PluginError('Cannot read Model, Not Initialised');
       }
     }
-    return (model as Model<Document>).db.collection(
-      localStateStore.getCollName(),
-    );
+    return (model as Model<Document>).db.collection(localStateStore.getCollName());
   }
 
   static plugin(schema: Schema, options: AssignerPluginOptions) {
@@ -115,10 +102,7 @@ export class MongooseIdAssigner extends EventEmitter {
     return refreshOptions(this);
   }
 
-  getFieldConfig(
-    field: string,
-    discriminator?: string,
-  ): FieldConfig | undefined {
+  getFieldConfig(field: string, discriminator?: string): FieldConfig | undefined {
     if (discriminator && this.options.discriminators) {
       for (const [key, value] of this.options.discriminators.entries()) {
         if (key === discriminator) {
@@ -143,15 +127,7 @@ export class MongooseIdAssigner extends EventEmitter {
   async getNextId(
     field: string,
     discriminator?: string,
-  ): Promise<
-    | void
-    | ObjectId
-    | Binary
-    | string
-    | number
-    | Promise<number>
-    | Promise<string>
-  > {
+  ): Promise<void | ObjectId | Binary | string | number | Promise<number> | Promise<string>> {
     const fieldConfig = this.getFieldConfig(field, discriminator);
 
     if (!fieldConfig) {
@@ -169,14 +145,7 @@ export class MongooseIdAssigner extends EventEmitter {
 
       case FieldConfigTypes.Number:
         await this.refreshOptions();
-        return getNextIdNumber(
-          field,
-          this,
-          fieldConfig as NumberFieldConfig,
-          '',
-          0,
-          true,
-        );
+        return getNextIdNumber(field, this, fieldConfig as NumberFieldConfig, '', 0, true);
       case FieldConfigTypes.String:
         await this.refreshOptions();
         return getNextIdString(field, this, fieldConfig, '', 0, true);

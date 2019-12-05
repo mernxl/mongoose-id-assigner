@@ -40,7 +40,8 @@ export function stringIncrementer(nextId: string, separator = '-'): string {
   // Get next Significant figure (10 if count = 1)
   const nextSig = Math.pow(10, maxLength - lastSig);
 
-  // if has moved up one digit(significant figure) and if lashDash will be cut out at location ltCount -1
+  // if has moved up one digit(significant figure) and if lashDash will
+  // be cut out at location ltCount -1
   if (digits >= nextSig) {
     return `${nextId.substr(0, lastSig - 1)}${digits}`;
   }

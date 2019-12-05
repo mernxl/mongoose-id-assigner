@@ -21,8 +21,7 @@ export async function getNextIdNumber(
   if (fieldConfig.nextIdFunction) {
     afterNextId = fieldConfig.nextIdFunction(nextId, fieldConfig.incrementBy);
   } else {
-    afterNextId =
-      nextId + (fieldConfig.incrementBy ? fieldConfig.incrementBy : 1);
+    afterNextId = nextId + (fieldConfig.incrementBy ? fieldConfig.incrementBy : 1);
   }
 
   try {
@@ -45,20 +44,10 @@ export async function getNextIdNumber(
       const multiplier = Math.abs(Math.random() * retries);
       await waitPromise(idAssigner.retryMillis * multiplier);
       await idAssigner.refreshOptions();
-      return getNextIdNumber(
-        field,
-        idAssigner,
-        fieldConfig,
-        discriminatorName,
-        ++retries,
-      );
+      return getNextIdNumber(field, idAssigner, fieldConfig, discriminatorName, ++retries);
     } else if (!update.value && retries > idAssigner.retryTime) {
       return Promise.reject(
-        PluginError(
-          `Maximum retryTime to set value attained!`,
-          idAssigner.modelName,
-          field,
-        ),
+        PluginError(`Maximum retryTime to set value attained!`, idAssigner.modelName, field),
       );
     }
   } catch (e) {

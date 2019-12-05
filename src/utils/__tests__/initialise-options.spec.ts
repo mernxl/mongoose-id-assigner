@@ -1,12 +1,9 @@
-import { Schema } from 'mongoose';
 import { AssignerOptions, FieldConfigTypes } from '../../assigner.interfaces';
 import { checkAndUpdateOptions } from '../initialise-options';
 import { normaliseOptions } from '../normalise-options';
 
 describe('initialise-options ->', () => {
-  const schema = new Schema({});
   const options: AssignerOptions = {
-    modelName: 'Person',
     fields: {
       _id: true,
       clientId: true,
@@ -27,10 +24,8 @@ describe('initialise-options ->', () => {
 
   describe('checkAndUpdateOptions()', () => {
     it('should return current option if fresh UnAvailable', async () => {
-      const normalised = normaliseOptions(schema, options);
-      expect(checkAndUpdateOptions(normalised, '' as any).options).toEqual(
-        normalised,
-      );
+      const normalised = normaliseOptions('Person', options);
+      expect(checkAndUpdateOptions(normalised, '' as any).options).toEqual(normalised);
     });
   });
 });

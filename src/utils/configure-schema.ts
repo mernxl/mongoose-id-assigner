@@ -34,9 +34,7 @@ function configurePreSave(assigner: MongooseIdAssigner) {
         if (assigner.state.error) {
           return Promise.reject(
             PluginError(
-              `Cannot assign field ids, Error on Init. [${
-                assigner.state.error
-              }]`,
+              `Cannot assign field ids, Error on Init. [${assigner.state.error}]`,
               assigner.modelName,
             ),
           );

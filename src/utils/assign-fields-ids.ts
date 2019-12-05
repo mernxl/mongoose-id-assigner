@@ -2,19 +2,12 @@ import { ObjectId } from 'mongodb';
 import { Document } from 'mongoose';
 import { FieldConfig } from '../assigner.interfaces';
 import { MongooseIdAssigner, NormalisedOptions } from '../MongooseIdAssigner';
-import {
-  getNextIdNumber,
-  getNextIdString,
-  getNextIdUUID,
-} from './get-next-ids';
+import { getNextIdNumber, getNextIdString, getNextIdUUID } from './get-next-ids';
 import { checkAndUpdateOptions } from './initialise-options';
 import { PluginError, waitPromise } from './others';
 import { isNumber, isObjectId, isString, isUUID } from './type-guards';
 
-export async function refreshOptions(
-  assigner: MongooseIdAssigner,
-  retries = 0,
-): Promise<void> {
+export async function refreshOptions(assigner: MongooseIdAssigner, retries = 0): Promise<void> {
   const collection = assigner.collection;
 
   try {
@@ -28,18 +21,13 @@ export async function refreshOptions(
         return refreshOptions(assigner, ++retries);
       }
       return Promise.reject(
-        PluginError(
-          'Stored Options not Found for Ready Model!',
-          assigner.modelName,
-        ),
+        PluginError('Stored Options not Found for Ready Model!', assigner.modelName),
       );
     }
 
     // todo Handle this case
     if (!freshOptions) {
-      return Promise.reject(
-        PluginError('AssignId unexpectedly not Ready', assigner.modelName),
-      );
+      return Promise.reject(PluginError('AssignId unexpectedly not Ready', assigner.modelName));
     }
 
     checkAndUpdateOptions(assigner.options, freshOptions as any);
@@ -48,17 +36,12 @@ export async function refreshOptions(
   }
 }
 
-export async function assignIdNetwork(
-  idAssigner: MongooseIdAssigner,
-  doc: Document,
-) {
+export async function assignIdNetwork(idAssigner: MongooseIdAssigner, doc: Document) {
   let dFields: Map<string, FieldConfig> | undefined;
 
   if (idAssigner.options.discriminators) {
     if ((doc as any)[idAssigner.discriminatorKey]) {
-      dFields = idAssigner.options.discriminators.get(
-        (doc as any)[idAssigner.discriminatorKey],
-      );
+      dFields = idAssigner.options.discriminators.get((doc as any)[idAssigner.discriminatorKey]);
     }
   }
 
@@ -87,20 +70,12 @@ export async function assignIdNetwork(
         }
 
         if (isNumber(config)) {
-          (doc as any)[field] = await getNextIdNumber(
-            field,
-            idAssigner,
-            config,
-          );
+          (doc as any)[field] = await getNextIdNumber(field, idAssigner, config);
           continue;
         }
 
         if (isString(config)) {
-          (doc as any)[field] = await getNextIdString(
-            field,
-            idAssigner,
-            config,
-          );
+          (doc as any)[field] = await getNextIdString(field, idAssigner, config);
         }
       }
     }
@@ -142,17 +117,12 @@ export async function assignIdNetwork(
   }
 }
 
-export function assignIdNoNetwork(
-  idAssigner: MongooseIdAssigner,
-  doc: Document,
-) {
+export function assignIdNoNetwork(idAssigner: MongooseIdAssigner, doc: Document) {
   let dFields: Map<string, FieldConfig> | undefined;
 
   if (idAssigner.options.discriminators) {
     if ((doc as any)[idAssigner.discriminatorKey]) {
-      dFields = idAssigner.options.discriminators.get(
-        (doc as any)[idAssigner.discriminatorKey],
-      );
+      dFields = idAssigner.options.discriminators.get((doc as any)[idAssigner.discriminatorKey]);
     }
   }
 

@@ -1,18 +1,19 @@
 import { Binary } from 'bson';
-import { Document, Model, Schema, Types } from 'mongoose';
+import { Connection, Document, Model, Schema, Types } from 'mongoose';
 import { getMongoose } from '../__mocks__/mongoose.config';
 import { getSchema } from '../__mocks__/test.models';
-import {
-  AssignerPluginOptions,
-  FieldConfigTypes,
-} from '../assigner.interfaces';
+import { AssignerPluginOptions, FieldConfigTypes } from '../assigner.interfaces';
 import { localStateStore } from '../LocalStateStore';
 import { MongooseIdAssigner } from '../MongooseIdAssigner';
 
-const mongoose = getMongoose();
+let connection: Connection;
+
+beforeAll(async () => {
+  connection = await getMongoose();
+});
 
 afterAll(async () => {
-  await mongoose.disconnect();
+  await connection.close();
 });
 
 describe('MongooseIdAssigner', () => {
@@ -29,20 +30,18 @@ describe('MongooseIdAssigner', () => {
   let exampleModel: Model<Document>;
 
   afterEach(async () => {
-    await mongoose.connection.dropDatabase();
+    await connection.dropDatabase();
   });
 
   describe('basics', () => {
     it('should throw error if no schema passed at Constructor', () => {
-      expect(
-        () => new MongooseIdAssigner('' as any, { modelName }),
-      ).toThrowError(/(Schema for the IdAssigner Must be provided!)/);
+      expect(() => new MongooseIdAssigner('' as any, { modelName })).toThrowError(
+        /(Schema for the IdAssigner Must be provided!)/,
+      );
     });
 
     it('should throw error if no option or modelName passed at Constructor', () => {
-      expect(
-        () => new MongooseIdAssigner(exampleSchema, undefined as any),
-      ).toThrowError(
+      expect(() => new MongooseIdAssigner(exampleSchema, undefined as any)).toThrowError(
         /(Plugin Options must be specified, with schema modelName!)/,
       );
     });
@@ -60,7 +59,7 @@ describe('MongooseIdAssigner', () => {
         modelName: 'example1',
       });
 
-      exampleModel = mongoose.model('example1', exampleSchema);
+      exampleModel = connection.model('example1', exampleSchema);
 
       const doc = await exampleModel.create({ personId: 'mernxl' });
 
@@ -76,7 +75,7 @@ describe('MongooseIdAssigner', () => {
         },
       });
 
-      exampleModel = mongoose.model('example4', exampleSchema);
+      exampleModel = connection.model('example4', exampleSchema);
 
       try {
         const doc = await exampleModel.create({ personId: 'mernxl' });
@@ -100,7 +99,7 @@ describe('MongooseIdAssigner', () => {
         },
       });
 
-      exampleModel = mongoose.model('example5', exampleSchema);
+      exampleModel = connection.model('example5', exampleSchema);
 
       try {
         const doc = await exampleModel.create({ personId: 'mernxl' });
@@ -128,15 +127,13 @@ describe('MongooseIdAssigner', () => {
       };
 
       exampleSchema.plugin(MongooseIdAssigner.plugin, options);
-      exampleModel = mongoose.model('example6', exampleSchema);
+      exampleModel = connection.model('example6', exampleSchema);
 
       try {
         const doc = await exampleModel.create({ personId: 'mernxl' });
         const doc2 = await exampleModel.create({ personId: 'mernxl' });
 
-        expect([doc._id, doc2._id]).toEqual(
-          expect.arrayContaining(['33333', '33334']),
-        );
+        expect([doc._id, doc2._id]).toEqual(expect.arrayContaining(['33333', '33334']));
         expect((doc as any).photoId).not.toBe((doc2 as any).photoId);
         expect([(doc as any).photoId, (doc2 as any).photoId]).toEqual(
           expect.arrayContaining([44444, 44445]),
@@ -170,8 +167,7 @@ describe('MongooseIdAssigner', () => {
           personId: {
             type: FieldConfigTypes.String,
             nextId: '55555',
-            nextIdFunction: (nextId: string) =>
-              (parseInt(nextId, 10) + 2).toString(),
+            nextIdFunction: (nextId: string) => (parseInt(nextId, 10) + 2).toString(),
           },
         },
       };
@@ -179,7 +175,7 @@ describe('MongooseIdAssigner', () => {
       try {
         MongooseIdAssigner.plugin(exampleSchema, options);
 
-        exampleModel = mongoose.model('example7', exampleSchema);
+        exampleModel = connection.model('example7', exampleSchema);
 
         const doc1 = await exampleModel.create({ personId: 'placeholder' });
         const doc2 = await exampleModel.create({ personId: 'placeholder' });
@@ -220,7 +216,7 @@ describe('MongooseIdAssigner', () => {
       try {
         const ExampleIA = new MongooseIdAssigner(exampleSchema, options);
 
-        exampleModel = mongoose.model('example8', exampleSchema);
+        exampleModel = connection.model('example8', exampleSchema);
         expect(ExampleIA.readyState).toBe(0); // initialising
 
         // initialise to ensure that
@@ -274,21 +270,17 @@ describe('MongooseIdAssigner', () => {
     describe('collection', () => {
       it('should return the IdAssigner Collection', async () => {
         const ExampleIA = new MongooseIdAssigner(exampleSchema, { modelName });
-        exampleModel = mongoose.model(modelName, exampleSchema);
+        exampleModel = connection.model(modelName, exampleSchema);
 
         await ExampleIA.initialise(exampleModel);
 
-        expect(ExampleIA.collection.collectionName).toMatch(
-          localStateStore.getCollName(),
-        );
+        expect(ExampleIA.collection.collectionName).toMatch(localStateStore.getCollName());
       });
 
       it('should throw error if IdAssigner not Initialise', async () => {
         const ExampleIA = new MongooseIdAssigner(exampleSchema, { modelName });
 
-        expect(() => ExampleIA.collection).toThrowError(
-          /(Cannot read Model, Not Initialised)/,
-        );
+        expect(() => ExampleIA.collection).toThrowError(/(Cannot read Model, Not Initialised)/);
       });
 
       it('should throw error if IdAssigner Errored on initialise', async () => {
@@ -315,7 +307,7 @@ describe('MongooseIdAssigner', () => {
           },
         });
 
-        exampleModel = mongoose.model('example9', exampleSchema);
+        exampleModel = connection.model('example9', exampleSchema);
 
         return ExampleIA.initialise(exampleModel)
           .then(state => expect(state).toBe(1))
@@ -335,7 +327,7 @@ describe('MongooseIdAssigner', () => {
           },
         });
 
-        exampleModel = mongoose.model('example10', exampleSchema);
+        exampleModel = connection.model('example10', exampleSchema);
 
         ExampleIA.initialise(exampleModel)
           .then(state => expect(state).toBe(1))
@@ -365,9 +357,7 @@ describe('MongooseIdAssigner', () => {
         try {
           await characterIA.getNextId('not-found', 'Person13');
         } catch (e) {
-          expect(e.message).toMatch(
-            /(\[not-found] does not have a Field Configuration)/,
-          );
+          expect(e.message).toMatch(/(\[not-found] does not have a Field Configuration)/);
         }
       });
       it('should return nextId depending on fieldConfig', async () => {
@@ -377,7 +367,7 @@ describe('MongooseIdAssigner', () => {
             photoId: 4444,
           },
         });
-        const model = mongoose.model('example14', exampleSchema);
+        const model = connection.model('example14', exampleSchema);
 
         try {
           await model.create({ photoId: 21 });
@@ -392,15 +382,13 @@ describe('MongooseIdAssigner', () => {
   describe('static', () => {
     describe('plugin()', () => {
       it('should throw error if no schema passed in', () => {
-        expect(() =>
-          MongooseIdAssigner.plugin('' as any, {} as any),
-        ).toThrowError(/(Schema for the IdAssigner Must be provided!)/);
+        expect(() => MongooseIdAssigner.plugin('' as any, {} as any)).toThrowError(
+          /(Schema for the IdAssigner Must be provided!)/,
+        );
       });
 
       it('should throw error if no options passed', () => {
-        expect(() =>
-          MongooseIdAssigner.plugin(new Schema({}), '' as any),
-        ).toThrowError(
+        expect(() => MongooseIdAssigner.plugin(new Schema({}), '' as any)).toThrowError(
           /(Plugin Options must be specified, with schema modelName!)/,
         );
       });
@@ -410,7 +398,7 @@ describe('MongooseIdAssigner', () => {
           modelName,
         });
 
-        exampleModel = mongoose.model(modelName, exampleSchema);
+        exampleModel = connection.model(modelName, exampleSchema);
 
         const doc = await exampleModel.create({ personId: 'mernxl' });
 
@@ -445,11 +433,8 @@ describe('MongooseIdAssigner', () => {
         };
 
         const CharacterIA = new MongooseIdAssigner(characterSchema, options);
-        const characterModel = mongoose.model('example11', characterSchema);
-        const personModel = characterModel.discriminator(
-          'Person1',
-          personSchema,
-        );
+        const characterModel = connection.model('example11', characterSchema);
+        const personModel = characterModel.discriminator('Person1', personSchema);
         const droidModel = characterModel.discriminator('Droid1', droidSchema);
         try {
           const character = await characterModel.create({
@@ -492,12 +477,9 @@ describe('MongooseIdAssigner', () => {
 
         characterSchema.plugin(MongooseIdAssigner.plugin, options);
 
-        const characterModel = mongoose.model('example12', characterSchema);
+        const characterModel = connection.model('example12', characterSchema);
 
-        const personModel = characterModel.discriminator(
-          'Person',
-          personSchema,
-        );
+        const personModel = characterModel.discriminator('Person', personSchema);
 
         droidSchema.path('_id', String);
         const droidModel = characterModel.discriminator('Droid', droidSchema);
@@ -553,19 +535,13 @@ describe('MongooseIdAssigner', () => {
         };
 
         const CharacterIA = new MongooseIdAssigner(characterSchema, options);
-        const characterModel = mongoose.model(modelName, characterSchema);
+        const characterModel = connection.model(modelName, characterSchema);
 
         personSchema.path('_id', String);
-        const personModel = characterModel.discriminator(
-          modelName + 'Person',
-          personSchema,
-        );
+        const personModel = characterModel.discriminator(modelName + 'Person', personSchema);
 
         droidSchema.path('_id', String);
-        const droidModel = characterModel.discriminator(
-          modelName + 'Droid',
-          droidSchema,
-        );
+        const droidModel = characterModel.discriminator(modelName + 'Droid', droidSchema);
 
         try {
           const character = await characterModel.create({
