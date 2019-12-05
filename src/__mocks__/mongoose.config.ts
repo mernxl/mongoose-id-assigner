@@ -8,6 +8,7 @@ const mongooseOptions = {
 };
 
 const IN_MEM = !!process.env.IN_MEM;
+const MONGOMS_VERSION = process.env.MONGOMS_VERSION;
 
 export async function getMongoose() {
   if (IN_MEM) {
@@ -26,9 +27,7 @@ export async function getMongoose() {
     });
 
     mongoose.connection.once('open', () => {
-      console.log(
-        `MongoDB successfully connected to ${mongoUri}, ${mongoServer.opts.binary?.version}`,
-      );
+      console.log(`MongoDB successfully connected to ${mongoUri}, ${MONGOMS_VERSION}`);
     });
 
     mongoose.connection.once('disconnected', () => mongoServer.stop());
