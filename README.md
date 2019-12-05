@@ -250,7 +250,7 @@ console.log(droid1.make)   --->   '18Y4434'
 It may arise that you need to query and use the nextId to at the front-end. In this case, you just need to 
 get an instance of the Assigner, then use the `getNextId` method. It is async method as it queries for `Number` and `String` cases.
 
-### Strain test
+## Strain test
 * Performs the task below on a locally hosted db instance.
 * On CI/CD environment, tests ran using [mongodb-memory-server](https://github.com/nodkz/mongodb-memory-server), on v3.4, v3.6, v4.0 and v4.2 on node v12, v10, v8
 
