@@ -1,5 +1,6 @@
 import { MongoMemoryServer } from 'mongodb-memory-server-global';
 import * as mongoose from 'mongoose';
+import uuid = require('uuid');
 
 const mongooseOptions = {
   promiseLibrary: Promise,
@@ -18,7 +19,9 @@ export async function getMongoose() {
 
     const mongoUri = await mongoServer.getConnectionString();
 
-    mongoose.connection.on('error', e => {
+    const connection = mongoose.createConnection();
+
+    connection.on('error', e => {
       if (e.message.code === 'ETIMEDOUT') {
         console.error(e);
       } else {
@@ -26,24 +29,28 @@ export async function getMongoose() {
       }
     });
 
-    mongoose.connection.once('open', () => {
+    connection.once('open', () => {
       console.log(`MongoDB successfully connected to ${mongoUri}, ${MONGOMS_VERSION}`);
     });
 
-    mongoose.connection.once('disconnected', () => mongoServer.stop());
+    connection.once('close', () => mongoServer.stop());
 
-    await mongoose.connect(mongoUri, mongooseOptions);
+    await connection.openUri(mongoUri, mongooseOptions);
 
-    return mongoose;
+    return connection;
   } else {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 
-    mongoose.connection.once('open', () => {
+    const connection = mongoose.createConnection();
+
+    connection.once('open', () => {
       console.log(`MongoDB successfully connected local`);
     });
 
-    await mongoose.connect('mongodb://localhost:27017/__mgIdAss__', mongooseOptions);
+    connection.once('close', () => console.log('Closed'));
 
-    return mongoose;
+    await connection.openUri(`mongodb://localhost:27017/__${uuid()}__`, mongooseOptions);
+
+    return connection;
   }
 }

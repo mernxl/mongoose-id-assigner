@@ -1,23 +1,23 @@
-import { Mongoose } from 'mongoose';
+import { Connection } from 'mongoose';
 import { getMongoose } from '../__mocks__/mongoose.config';
 import { getSchema } from '../__mocks__/test.models';
 import { LocalStateStore, localStateStore, SchemaState } from '../LocalStateStore';
 import { MongooseIdAssigner } from '../MongooseIdAssigner';
 
 const ExampleSchema = getSchema(0);
-let mongoose: Mongoose;
+let connection: Connection;
 
 beforeAll(async () => {
-  mongoose = await getMongoose();
+  connection = await getMongoose();
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
+  await connection.close();
 });
 
 describe('LocalStateStore', () => {
   afterEach(async () => {
-    await mongoose.connection.dropDatabase();
+    await connection.dropDatabase();
   });
 
   describe('basics', () => {
@@ -52,7 +52,7 @@ describe('LocalStateStore', () => {
       localStateStore.clear();
       localStateStore.setCollName('newName');
       exampleIA = new MongooseIdAssigner(ExampleSchema, { modelName });
-      const ExampleModel = mongoose.model(modelName, ExampleSchema);
+      const ExampleModel = connection.model(modelName, ExampleSchema);
 
       try {
         await exampleIA.initialise(ExampleModel);
@@ -65,7 +65,7 @@ describe('LocalStateStore', () => {
     it('should throw Error if an Assigner already Initialised', async () => {
       localStateStore.clear();
       exampleIA = new MongooseIdAssigner(ExampleSchema, { modelName });
-      const ExampleModel = mongoose.model(modelName, ExampleSchema);
+      const ExampleModel = connection.model(modelName, ExampleSchema);
 
       try {
         await exampleIA.initialise(ExampleModel);

@@ -1,19 +1,19 @@
 import { Binary } from 'bson';
-import { Document, Model, Mongoose, Schema, Types } from 'mongoose';
+import { Connection, Document, Model, Schema, Types } from 'mongoose';
 import { getMongoose } from '../__mocks__/mongoose.config';
 import { getSchema } from '../__mocks__/test.models';
 import { AssignerPluginOptions, FieldConfigTypes } from '../assigner.interfaces';
 import { localStateStore } from '../LocalStateStore';
 import { MongooseIdAssigner } from '../MongooseIdAssigner';
 
-let mongoose: Mongoose;
+let connection: Connection;
 
 beforeAll(async () => {
-  mongoose = await getMongoose();
+  connection = await getMongoose();
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
+  await connection.close();
 });
 
 describe('MongooseIdAssigner', () => {
@@ -30,7 +30,7 @@ describe('MongooseIdAssigner', () => {
   let exampleModel: Model<Document>;
 
   afterEach(async () => {
-    await mongoose.connection.dropDatabase();
+    await connection.dropDatabase();
   });
 
   describe('basics', () => {
@@ -59,7 +59,7 @@ describe('MongooseIdAssigner', () => {
         modelName: 'example1',
       });
 
-      exampleModel = mongoose.model('example1', exampleSchema);
+      exampleModel = connection.model('example1', exampleSchema);
 
       const doc = await exampleModel.create({ personId: 'mernxl' });
 
@@ -75,7 +75,7 @@ describe('MongooseIdAssigner', () => {
         },
       });
 
-      exampleModel = mongoose.model('example4', exampleSchema);
+      exampleModel = connection.model('example4', exampleSchema);
 
       try {
         const doc = await exampleModel.create({ personId: 'mernxl' });
@@ -99,7 +99,7 @@ describe('MongooseIdAssigner', () => {
         },
       });
 
-      exampleModel = mongoose.model('example5', exampleSchema);
+      exampleModel = connection.model('example5', exampleSchema);
 
       try {
         const doc = await exampleModel.create({ personId: 'mernxl' });
@@ -127,7 +127,7 @@ describe('MongooseIdAssigner', () => {
       };
 
       exampleSchema.plugin(MongooseIdAssigner.plugin, options);
-      exampleModel = mongoose.model('example6', exampleSchema);
+      exampleModel = connection.model('example6', exampleSchema);
 
       try {
         const doc = await exampleModel.create({ personId: 'mernxl' });
@@ -175,7 +175,7 @@ describe('MongooseIdAssigner', () => {
       try {
         MongooseIdAssigner.plugin(exampleSchema, options);
 
-        exampleModel = mongoose.model('example7', exampleSchema);
+        exampleModel = connection.model('example7', exampleSchema);
 
         const doc1 = await exampleModel.create({ personId: 'placeholder' });
         const doc2 = await exampleModel.create({ personId: 'placeholder' });
@@ -216,7 +216,7 @@ describe('MongooseIdAssigner', () => {
       try {
         const ExampleIA = new MongooseIdAssigner(exampleSchema, options);
 
-        exampleModel = mongoose.model('example8', exampleSchema);
+        exampleModel = connection.model('example8', exampleSchema);
         expect(ExampleIA.readyState).toBe(0); // initialising
 
         // initialise to ensure that
@@ -270,7 +270,7 @@ describe('MongooseIdAssigner', () => {
     describe('collection', () => {
       it('should return the IdAssigner Collection', async () => {
         const ExampleIA = new MongooseIdAssigner(exampleSchema, { modelName });
-        exampleModel = mongoose.model(modelName, exampleSchema);
+        exampleModel = connection.model(modelName, exampleSchema);
 
         await ExampleIA.initialise(exampleModel);
 
@@ -307,7 +307,7 @@ describe('MongooseIdAssigner', () => {
           },
         });
 
-        exampleModel = mongoose.model('example9', exampleSchema);
+        exampleModel = connection.model('example9', exampleSchema);
 
         return ExampleIA.initialise(exampleModel)
           .then(state => expect(state).toBe(1))
@@ -327,7 +327,7 @@ describe('MongooseIdAssigner', () => {
           },
         });
 
-        exampleModel = mongoose.model('example10', exampleSchema);
+        exampleModel = connection.model('example10', exampleSchema);
 
         ExampleIA.initialise(exampleModel)
           .then(state => expect(state).toBe(1))
@@ -367,7 +367,7 @@ describe('MongooseIdAssigner', () => {
             photoId: 4444,
           },
         });
-        const model = mongoose.model('example14', exampleSchema);
+        const model = connection.model('example14', exampleSchema);
 
         try {
           await model.create({ photoId: 21 });
@@ -398,7 +398,7 @@ describe('MongooseIdAssigner', () => {
           modelName,
         });
 
-        exampleModel = mongoose.model(modelName, exampleSchema);
+        exampleModel = connection.model(modelName, exampleSchema);
 
         const doc = await exampleModel.create({ personId: 'mernxl' });
 
@@ -433,7 +433,7 @@ describe('MongooseIdAssigner', () => {
         };
 
         const CharacterIA = new MongooseIdAssigner(characterSchema, options);
-        const characterModel = mongoose.model('example11', characterSchema);
+        const characterModel = connection.model('example11', characterSchema);
         const personModel = characterModel.discriminator('Person1', personSchema);
         const droidModel = characterModel.discriminator('Droid1', droidSchema);
         try {
@@ -477,7 +477,7 @@ describe('MongooseIdAssigner', () => {
 
         characterSchema.plugin(MongooseIdAssigner.plugin, options);
 
-        const characterModel = mongoose.model('example12', characterSchema);
+        const characterModel = connection.model('example12', characterSchema);
 
         const personModel = characterModel.discriminator('Person', personSchema);
 
@@ -535,7 +535,7 @@ describe('MongooseIdAssigner', () => {
         };
 
         const CharacterIA = new MongooseIdAssigner(characterSchema, options);
-        const characterModel = mongoose.model(modelName, characterSchema);
+        const characterModel = connection.model(modelName, characterSchema);
 
         personSchema.path('_id', String);
         const personModel = characterModel.discriminator(modelName + 'Person', personSchema);
