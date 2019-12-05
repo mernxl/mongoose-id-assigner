@@ -21,15 +21,15 @@ This is the perfect tool if you wish to work with `discriminators` and have `_id
 # Table of Content
 - [Installation](#installation)
 - [Basic Usage](#basic-usage)
-  - [Plugin Options](#plugin-options)
-  - [Point to Note](#point-to-note)
+  - [AssignerPluginOptions](#assignerpluginoptions)
+  - [Point to Note](#points-to-note)
 - [Examples](#examples)
   - [Configuration Methods](#configuration-methods)
 - [Working with Discriminators](#working-with-discriminators)
+- [Strain Test](#strain-test)
 - [TypeDefinitions](#typedefinitions)
-- [Strain Test](#strain-test,-performs-the-task-below-on-a-locally-hosted-db-instance.)
 - [Contributions](#contributions)
-  - [NextIdFunctions](#nextidfunctions-(incrementer))
+  - [NextIdFunctions](#nextidfunctions-incrementer)
 - [License](#license)
 
 ## Installation
@@ -45,15 +45,33 @@ yarn add uuid
 ```
 
 ## Basic Usage
-### Plugin Options
-TypeName: **AssignerPluginOptions**
-- `modelName`: **String** Name of the Model your are working with. If discriminators, then provide baseModel Name.
-- `fields`: **AssignerFieldsConfigMap?** The configuration Map of the fields you want the assigner to assign ids to.
-  If undefined, then plugin assigns ids to `_id` field, (ObjectId).
-  - [fieldName: string]: FieldConfig | string | number | boolean | 'GUID' | 'UUID'
-- `discriminators`: **[discriminatorName: string]: AssignerFieldsConfigMap?** An Object with Keys `discriminatorName` 
-  and value a Configuration Map for fields on that discriminator that need unique values. Any discriminator without a 
-  fieldConfig will use that of the baseModel. 
+You could create the plugin from the `MongooseIdAssigner` Constructor, which returns a instance which you could use to query `nextIds`. 
+#### `from constructor(schema: Schema, options: AssignerPluginOptions): MongooseIdAssigner`
+```js
+...
+const ExampleIA = new MongooseIdAssigner(exampleSchema, options);
+exampleModel = mongoose.model('Example', exampleSchema);
+
+// always call the initialise, to ensure assigner initialised before calling getNextId
+// assigners are always auto initialised on every first save
+await ExampleIA.initialise(exampleModel);
+await ExampleIA.getNextId('fieldName'); // nextId
+...
+```
+
+Alternatively you have the plugin setup by calling the static `plugin` method.
+#### `static plugin(schema: Schema, options: AssignerPluginOptions): MongooseIdAssigner`
+```js
+...
+exampleSchema.plugin(MongooseIdAssigner.plugin, options);
+...
+```
+### AssignerPluginOptions
+| Parameter      |                          Type                          |                                                                                                   Description                                                                                                  |
+|----------------|:------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| modelName      | String(Required)                                       | Name of the Model your are working with. If discriminators, then provide baseModel Name.                                                                                                                       |
+| fields         | [AssignerFieldsConfigMap](#typedefinitions) (Optional) | The configuration Map of the fields you want the assigner to assign ids to. If undefined, then plugin assigns ids to `_id` field, (ObjectId).                                                                  |
+| discriminators | [DiscriminatorConfigMap](#typedefinitions) (Optional) | An Object with key being a `discriminatorName` and value a Configuration Map for fields on that discriminator that need unique values. Any discriminator without a fieldConfig will use that of the baseModelk |
 
 ### Points to Note
 - At every Network Assigner init(i.e Assigner with Number, String FieldConfigTypes), the Assigner(for a Model) refreshes and syncs with the db stored options. Take example micro-service cluster, 
@@ -232,6 +250,95 @@ console.log(droid1.make)   --->   '18Y4434'
 It may arise that you need to query and use the nextId to at the front-end. In this case, you just need to 
 get an instance of the Assigner, then use the `getNextId` method. It is async method as it queries for `Number` and `String` cases.
 
+### Strain test
+* Performs the task below on a locally hosted db instance.
+* On CI/CD environment, tests ran using [mongodb-memory-server](https://github.com/nodkz/mongodb-memory-server), on v3.4, v3.6, v4.0 and v4.2 on node v12, v10, v8
+
+```typescript
+// using ts :)
+import * as mongoose from 'mongoose';
+import { AssignerOptions, FieldConfigTypes, localStateStore, MongooseIdAssigner } from './src';
+
+describe('MongooseIdAssigner', () => {
+
+  it('should be robust enough to avoid duplicates', async () => {
+    const options: AssignerPluginOptions = {
+      modelName: 'example8',
+      fields: {
+        _id: '33333',
+        photoId: 44444,
+        emailId: '55555',
+        personId: {
+          type: FieldConfigTypes.String,
+          nextId: 'SPEC-7382-4344-3232',
+          separator: '-',
+        },
+        uuidFieldString: {
+          type: FieldConfigTypes.UUID,
+        },
+        uuidFieldBuffer: {
+          type: FieldConfigTypes.UUID,
+          version: 1,
+          asBinary: true,
+        },
+        objectIdField: FieldConfigTypes.ObjectId,
+      },
+    };
+
+    try {
+      const ExampleIA = new MongooseIdAssigner(exampleSchema, options);
+
+      exampleModel = mongoose.model('example8', exampleSchema);
+      expect(ExampleIA.readyState).toBe(0); // initialising
+
+      // initialise to ensure that
+      // model is set and db is connected
+      // before performing heavy tasks
+      // or you can set max event listeners to 100 to suppress warnings on waits
+      await ExampleIA.initialise(exampleModel);
+
+      expect(ExampleIA.readyState).toBe(1);
+
+      const promises = [];
+      for (let i = 0; i < 100; i++) {
+        promises.push(exampleModel.create({ personId: 'mernxl' }));
+      }
+
+      const docs: any[] = await Promise.all(promises);
+      for (let i = 0; i < 100; i++) {
+        const _id = docs[i]._id;
+        const photoId = docs[i].photoId;
+        const emailId = docs[i].emailId;
+        const personId = docs[i].personId;
+        const uuidFieldString = docs[i].uuidFieldString;
+        const uuidFieldBuffer = docs[i].uuidFieldBuffer;
+        const objectIdField = docs[i].objectIdField;
+        expect(typeof photoId).toBe('number');
+        expect(typeof emailId).toBe('string');
+        expect(personId).toMatch(/(SPEC-7382-4344-3)\d+/);
+        expect(objectIdField).toBeInstanceOf(Types.ObjectId);
+        expect(typeof uuidFieldString).toBe('string');
+        expect(uuidFieldBuffer).toBeInstanceOf(Binary);
+
+        for (const cDoc of docs) {
+          if (_id === cDoc._id) {
+            continue;
+          }
+          expect(photoId).not.toBe(cDoc.photoId);
+          expect(emailId).not.toBe(cDoc.emailId);
+          expect(personId).not.toBe(cDoc.personId);
+          expect(objectIdField).not.toBe(cDoc.objectIdField);
+          expect(uuidFieldString).not.toEqual(cDoc.uuidFieldString);
+          expect(uuidFieldBuffer).not.toEqual(cDoc.uuidFieldBuffer);
+        }
+      }
+    } catch (e) {
+      expect(e).toBeUndefined();
+    }
+  });
+});
+```
+
 ## TypeDefinitions
 ```typescript
 /**
@@ -325,92 +432,6 @@ export interface UUIDFieldConfig {
   version?: 1 | 4; // supports 1 and 4, default 1
   versionOptions?: any;
 }
-```
-
-### Strain test, Performs the task below on a locally hosted db instance.
-```typescript
-// using ts :)
-import * as mongoose from 'mongoose';
-import { AssignerOptions, FieldConfigTypes, localStateStore, MongooseIdAssigner } from './src';
-
-describe('MongooseIdAssigner', () => {
-
-  it('should be robust enough to avoid duplicates', async () => {
-    const options: AssignerPluginOptions = {
-      modelName: 'example8',
-      fields: {
-        _id: '33333',
-        photoId: 44444,
-        emailId: '55555',
-        personId: {
-          type: FieldConfigTypes.String,
-          nextId: 'SPEC-7382-4344-3232',
-          separator: '-',
-        },
-        uuidFieldString: {
-          type: FieldConfigTypes.UUID,
-        },
-        uuidFieldBuffer: {
-          type: FieldConfigTypes.UUID,
-          version: 1,
-          asBinary: true,
-        },
-        objectIdField: FieldConfigTypes.ObjectId,
-      },
-    };
-
-    try {
-      const ExampleIA = new MongooseIdAssigner(exampleSchema, options);
-
-      exampleModel = mongoose.model('example8', exampleSchema);
-      expect(ExampleIA.readyState).toBe(0); // initialising
-
-      // initialise to ensure that
-      // model is set and db is connected
-      // before performing heavy tasks
-      // or you can set max event listeners to 100 to suppress warnings on waits
-      await ExampleIA.initialise(exampleModel);
-
-      expect(ExampleIA.readyState).toBe(1);
-
-      const promises = [];
-      for (let i = 0; i < 100; i++) {
-        promises.push(exampleModel.create({ personId: 'mernxl' }));
-      }
-
-      const docs: any[] = await Promise.all(promises);
-      for (let i = 0; i < 100; i++) {
-        const _id = docs[i]._id;
-        const photoId = docs[i].photoId;
-        const emailId = docs[i].emailId;
-        const personId = docs[i].personId;
-        const uuidFieldString = docs[i].uuidFieldString;
-        const uuidFieldBuffer = docs[i].uuidFieldBuffer;
-        const objectIdField = docs[i].objectIdField;
-        expect(typeof photoId).toBe('number');
-        expect(typeof emailId).toBe('string');
-        expect(personId).toMatch(/(SPEC-7382-4344-3)\d+/);
-        expect(objectIdField).toBeInstanceOf(Types.ObjectId);
-        expect(typeof uuidFieldString).toBe('string');
-        expect(uuidFieldBuffer).toBeInstanceOf(Binary);
-
-        for (const cDoc of docs) {
-          if (_id === cDoc._id) {
-            continue;
-          }
-          expect(photoId).not.toBe(cDoc.photoId);
-          expect(emailId).not.toBe(cDoc.emailId);
-          expect(personId).not.toBe(cDoc.personId);
-          expect(objectIdField).not.toBe(cDoc.objectIdField);
-          expect(uuidFieldString).not.toEqual(cDoc.uuidFieldString);
-          expect(uuidFieldBuffer).not.toEqual(cDoc.uuidFieldBuffer);
-        }
-      }
-    } catch (e) {
-      expect(e).toBeUndefined();
-    }
-  });
-});
 ```
 
 ## CONTRIBUTIONS
