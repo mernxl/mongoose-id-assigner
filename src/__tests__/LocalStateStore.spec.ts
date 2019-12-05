@@ -1,24 +1,25 @@
+import { Mongoose } from 'mongoose';
 import { getMongoose } from '../__mocks__/mongoose.config';
 import { getSchema } from '../__mocks__/test.models';
-import {
-  LocalStateStore,
-  localStateStore,
-  SchemaState,
-} from '../LocalStateStore';
+import { LocalStateStore, localStateStore, SchemaState } from '../LocalStateStore';
 import { MongooseIdAssigner } from '../MongooseIdAssigner';
 
-const mongoose = getMongoose();
 const ExampleSchema = getSchema(0);
+let mongoose: Mongoose;
+
+beforeAll(async () => {
+  mongoose = await getMongoose();
+});
 
 afterAll(async () => {
   await mongoose.disconnect();
 });
 
-afterEach(async () => {
-  await mongoose.connection.dropDatabase();
-});
-
 describe('LocalStateStore', () => {
+  afterEach(async () => {
+    await mongoose.connection.dropDatabase();
+  });
+
   describe('basics', () => {
     it('should be a singleton class', () => {
       expect(new LocalStateStore()).toEqual(localStateStore);
@@ -68,9 +69,7 @@ describe('LocalStateStore', () => {
 
       try {
         await exampleIA.initialise(ExampleModel);
-        expect(() => localStateStore.setCollName('newName')).toThrowError(
-          /(setCollName)/,
-        );
+        expect(() => localStateStore.setCollName('newName')).toThrowError(/(setCollName)/);
       } catch (e) {
         expect(e).toBeUndefined();
       }
