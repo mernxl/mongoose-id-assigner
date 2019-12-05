@@ -3,5 +3,6 @@
   "singleQuote": true,
   "trailingComma": "all",
   "bracketSpacing": true,
-  "parser": "typescript"
+  "parser": "typescript",
+  "printWidth": 100
 }
