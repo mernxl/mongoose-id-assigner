@@ -12,7 +12,15 @@ const mongooseOptions: ConnectionOptions = {
 
 const IN_MEM = !!process.env.IN_MEM;
 
+let init = false;
+
 export function getMongoose() {
+  if (init) {
+    return mongoose;
+  }
+
+  init = true;
+
   if (IN_MEM) {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
@@ -43,9 +51,13 @@ export function getMongoose() {
   } else {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
     mongoose.connect(
-      'mongodb://localhost:27017/demoDB',
+      'mongodb://localhost:27017/__mgIdAss__',
       mongooseOptions,
     );
+
+    mongoose.connection.once('open', () => {
+      console.log(`MongoDB successfully connected local`);
+    });
 
     return mongoose;
   }
