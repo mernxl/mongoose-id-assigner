@@ -1,6 +1,6 @@
 import { MongoMemoryServer } from 'mongodb-memory-server-global';
 import * as mongoose from 'mongoose';
-import uuid = require('uuid');
+import { v1 as uuid } from 'uuid';
 
 const mongooseOptions = {
   promiseLibrary: Promise,
